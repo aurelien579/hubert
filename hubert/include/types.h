@@ -3,6 +3,7 @@
 
 #define PANIC(msg) do {                                                \
     printf("[ERROR] %s at %s:%d\n", msg, __FILE__, __LINE__);          \
+    on_close(-1);                                                      \
 } while (0)                                                            \
 
 #define NAME_MAX        42
@@ -28,22 +29,27 @@ struct food {
 };
 
 struct stock {
-    int          count;
+    int           count;
     struct food  *foods; /* Array of size count */
 };
 
+struct list {
+    struct list		    *next;
+    int                  id;
+    char                 name[NAME_MAX];	
+};
+
 struct restaurant {
+    struct restaurant   *next;
     int                  id;
     char                 name[NAME_MAX];
     struct stock         stock;
-    struct restaurant   *next;
 };
 
 struct user {
-    
+    struct user    *next;
     int             id;
     char            name[NAME_MAX];
-    struct user    *next;
 };
 
 struct msg_status {
