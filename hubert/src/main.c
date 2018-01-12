@@ -18,21 +18,31 @@ static int count_restaurant = 100;
 int permanent_queue;
 sem_t *sem_drivers;
 
-static void registerrest(char *name, int id) {
+static void register_rest(char *name, int id)
+{
     
 }
-static void unregisterrest(char *name) {
+
+static void unregister_rest(char *name)
+{
     
 }
-static void adduser(char *name, int id) {
+
+static void add_user(char *name, int id)
+{
     
 }
-static void killuser(char *name) {
+
+static void kill_user(char *name)
+{
     
 }
-static void handleuser(int id) {
+
+static void handle_user(int id)
+{
     
 }
+
 static void update_stock(int n)
 {
     printf("updating stocks...\n");
@@ -65,23 +75,17 @@ int main(int argc, char **argv)
         if (msg->type == MSG_USER_CONNECT) {
             int pid = fork();
             if (pid==0) {
-                adduser(msg->name, pid);
-                handleuser(pid);
+                add_user(msg->name, pid);
+                handle_user(pid);
                 exit(0);
             }
-        }
-        
-        else if (msg->type == MSG_REST_REGISTER) {
+        } else if (msg->type == MSG_REST_REGISTER) {
             int id = count_restaurant++;
-            registerrest(msg->name, id);
-        }
-        
-        else if (msg->type == MSG_REST_UNREGISTER) {
-            unregisterrest(msg->name);
-        }
-        
-        else if (msg->type == MSG_USER_DISCONNECT) {
-            killuser(msg->name);
+            register_rest(msg->name, id);
+        } else if (msg->type == MSG_REST_UNREGISTER) {
+            unregister_rest(msg->name);
+        } else if (msg->type == MSG_USER_DISCONNECT) {
+            kill_user(msg->name);
         }
     
     }
