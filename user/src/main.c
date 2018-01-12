@@ -26,6 +26,17 @@ int main(int argc, char **argv)
 	msgsnd(permanent_queue, &msg, sizeof(msg.name), 0);
 	printf("connecté\n");
 	
+	struct msg_status status;
+	msgrcv(permanent_queue, &status, sizeof(status.id), MSG_USER_STATUS, 0);
+	printf("queue : %d\n", status.id);
+	
+	int queue = msgget(status.id, 0666);
+	
+	struct msg_type msg_type;
+	msg_type.type = MSG_TYPE;
+	msg_type.type = MSG_OFFER_REQUEST;
+	msgsnd(queue, &msg_type, sizeof(msg_type.next_type), 0);
+	
 	sleep(10);
 	
 	msg.type = MSG_USER_DISCONNECT;

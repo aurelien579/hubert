@@ -21,7 +21,14 @@
 #define MSG_STOCK_REQUEST       9
 #define MSG_COMMAND_ANNOUNCE    10
 #define MSG_STOCK_ANNOUNCE      11
-#define MSG_FOOD_LIST           12
+#define MSG_REST_LIST           12
+#define MSG_TYPE                13
+
+
+struct msg_type {
+    long type;
+    long next_type;
+};
 
 struct food {
     char    name[NAME_MAX];
@@ -34,16 +41,20 @@ struct stock {
 };
 
 struct list {
-    struct list		    *next;
+    struct list         *next;
     int                  id;
-    char                 name[NAME_MAX];	
+    char                 name[NAME_MAX];    
+};
+
+struct restaurant_info {
+    char            name[NAME_MAX];
+    struct stock    stock;
 };
 
 struct restaurant {
-    struct restaurant   *next;
-    int                  id;
-    char                 name[NAME_MAX];
-    struct stock         stock;
+    struct restaurant      *next;
+    int                     id;
+    struct restaurant_info  info;
 };
 
 struct user {
@@ -62,10 +73,6 @@ struct msg_state {
     char    name[NAME_MAX];
 };
 
-struct msg_offer_request {
-    long type;
-};
-
 struct msg_delivery_status {
     long type;
     int done;
@@ -81,14 +88,14 @@ struct msg_command_announce {
     char restaurant_name[NAME_MAX];
 };
 
-struct msg_stock_annouce {
+struct msg_stock_announce {
     long type;
-    int size;
+    int rest_count;
 };    
 
-struct msg_food_list {
+struct msg_restaurant_list {
     long type;
-    struct food foods[];
+    struct restaurant_info rests[];
 };
 
 #endif
