@@ -27,16 +27,26 @@ int main(int argc, char **argv)
 	printf("connecté\n");
 	
 	struct msg_status status;
-	msgrcv(permanent_queue, &status, sizeof(status.id), MSG_USER_STATUS, 0);
+	msgrcv(permanent_queue, &status, sizeof(int), MSG_USER_STATUS, 0);
 	printf("queue : %d\n", status.id);
-	
 	int queue = msgget(status.id, 0666);
 	
 	struct msg_type msg_type;
 	msg_type.type = MSG_TYPE;
-	msg_type.type = MSG_OFFER_REQUEST;
+	msg_type.next_type = MSG_OFFER_REQUEST;
 	msgsnd(queue, &msg_type, sizeof(msg_type.next_type), 0);
+
+	struct msg_stock_announce announce;
+	msgrcv(queue, &announce, MSG_SIZE(stock_announce), MSG_STOCK_ANNOUNCE, 0);
 	
+        struct msg_restaurant_list *menu = malloc(sizeof(long) + announce.rests_size);
+	msgrcv(queue, menu, announce.rests_size, MSG_REST_LIST, 0);
+
+	int i;
+	for (i = 0; i < announce.count; i++) {
+		printf("restaurant : %s\n", menu->rests[i].name);
+	}
+
 	sleep(10);
 	
 	msg.type = MSG_USER_DISCONNECT;

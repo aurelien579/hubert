@@ -6,6 +6,8 @@
     on_close(-1);                                                      \
 } while (0)                                                            \
 
+#define MSG_SIZE(T) (sizeof(struct msg_##T) - sizeof(long))
+
 #define NAME_MAX        42
 #define UBERT_KEY       1
 #define DRIVER_COUNT    5
@@ -23,7 +25,7 @@
 #define MSG_STOCK_ANNOUNCE      11
 #define MSG_REST_LIST           12
 #define MSG_TYPE                13
-
+#define MSG_STOCK 		14
 
 struct msg_type {
     long type;
@@ -35,8 +37,13 @@ struct food {
     int     quantity;
 };
 
+struct msg_food_list {
+	long id;
+	struct food foods[];
+};
+
 struct stock {
-    int           count;
+    int 	  count;
     struct food  *foods; /* Array of size count */
 };
 
@@ -90,8 +97,9 @@ struct msg_command_announce {
 
 struct msg_stock_announce {
     long type;
-    int rest_count;
-};    
+    int  count;
+    int  rests_size;
+} __attribute__((packed));
 
 struct msg_restaurant_list {
     long type;
