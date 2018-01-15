@@ -24,33 +24,25 @@
 #define MSG_COMMAND_ANNOUNCE    10
 #define MSG_STOCK_ANNOUNCE      11
 #define MSG_REST_LIST           12
-#define MSG_TYPE                13
-#define MSG_STOCK 		14
-
-struct msg_type {
-    long type;
-    long next_type;
-};
+#define MSG_STOCK 		        14
+#define MSG_LONG                15
+#define MSG_REST                16
+#define MSG_FOOD_LIST           17
 
 struct food {
     char    name[NAME_MAX];
     int     quantity;
 };
 
-struct msg_food_list {
-	long id;
-	struct food foods[];
-};
-
 struct stock {
-    int 	  count;
-    struct food  *foods; /* Array of size count */
+    int 	     count;
+    struct food *foods; /* Array of size count */
 };
 
 struct list {
     struct list         *next;
     int                  id;
-    char                 name[NAME_MAX];    
+    char                 name[NAME_MAX];
 };
 
 struct restaurant_info {
@@ -70,40 +62,40 @@ struct user {
     char            name[NAME_MAX];
 };
 
-struct msg_status {
-    long    type;
-    int     id;
-};
-
 struct msg_state {
     long    type;
     char    name[NAME_MAX];
-};
+} __attribute__((packed));
 
-struct msg_delivery_status {
+struct msg_stock_request {
     long type;
-    int done;
-};
-
-struct stock_request {
-    long type;
-};
+} __attribute__((packed));
 
 struct msg_command_announce {
     long type;
     int count;
     char restaurant_name[NAME_MAX];
-};
+} __attribute__((packed));
 
-struct msg_stock_announce {
+struct msg_long {
     long type;
-    int  count;
-    int  rests_size;
+    int value;
+} __attribute__((packed));
+
+struct msg_rest {
+    long type;
+    char name[NAME_MAX];
+    int  size;
+} __attribute__((packed));
+
+struct msg_food_list {
+	long type;
+	struct food foods[];
 } __attribute__((packed));
 
 struct msg_restaurant_list {
-    long type;
-    struct restaurant_info rests[];
-};
+    long                   type;
+    struct restaurant_info rest[];
+} __attribute__((packed));
 
 #endif
