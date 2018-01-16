@@ -148,7 +148,7 @@ void hubert_process(int updating_process_pid)
 
     while (1) {
         printf("Reading...\n");
-        msgrcv(permanent_queue, &msg, NAME_MAX * sizeof(char), 0, 0); // a tester option choisi
+        msgrcv(permanent_queue, &msg, NAME_MAX * sizeof(char) + sizeof(long), 0, 0); // a tester option choisi
         int type = msg.type;
         msg.type = -1;
 
@@ -165,10 +165,14 @@ void hubert_process(int updating_process_pid)
                 add_user(&g_users, msg.name, pid);
             }
         } else if (type == MSG_REST_REGISTER) {
+            
             int id = mem->rests_number + 1;
             sem_wait(sem_mutex);                  
             hubert_add_restaurant(mem, msg.name, id);
             sem_post(sem_mutex);
+            struct msg_long cur = {MSG_REST_STATUS, 1 };
+            msgsnd(permament_queue, &cur, MSG_SIZE(long), 0);
+            
         } else if (type == MSG_REST_UNREGISTER) {            
             sem_wait(sem_mutex);
             hubert_del_restaurant(mem, msg.name);

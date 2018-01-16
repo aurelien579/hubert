@@ -46,7 +46,7 @@ static void send_restaurants(int user_queue, struct shared_memory *mem)
     }
 }
 
-static void remove_foods_in_stock(struct restaurant *rest, char *rest_name, struct msg_food_list *command, int nb_foods)
+static int remove_foods_in_stock(struct restaurant *rest, struct msg_food_list *command, int nb_foods)
 {
     int count_command = 0;
     for (count_command = 0; count_command < nb_foods; count_command++) {
@@ -54,8 +54,16 @@ static void remove_foods_in_stock(struct restaurant *rest, char *rest_name, stru
         while (strncmp(rest->stock.foods[count].name, command->foods[count_command].name, NAME_MAX) != 0) {
             count++;
         }
-        rest->stock.foods[count].quantity -= command->foods[count_command].quantity;
+        int food_stocked = rest->stock.foods[count].quantity;
+        int food_commanded = command->foods[count_command].quantity;
+        if (food_stocked < food_commanded) {
+            return 0;
+        }
+        else {
+            rest->stock.foods[count].quantity -= food_commanded;
+        }
     }
+    return 1;
 }
 
 void user_process(int permanent_queue, int id)
@@ -76,7 +84,7 @@ void user_process(int permanent_queue, int id)
     
     while (1) {        
         struct msg_long msg;
-        msgrcv(user_queue, &msg, sizeof(int), MSG_LONG, 0);
+        msgrcv(user_queue, &msg, MSG_SIZE(long), MSG_LONG, 0);
         
         if (msg.value == MSG_OFFER_REQUEST) {
             printf("MSG_OFFER_REQUEST\n");
@@ -98,23 +106,31 @@ void user_process(int permanent_queue, int id)
             }
             
             struct msg_long transfered_command = { MSG_LONG, command_announce.count };
-            msgsnd(rest->id, &transfered_command, MSG_SIZE(long), 0);
+            //msgsnd(rest->id, &transfered_command, MSG_SIZE(long), 0);
             
             int message_size = command_announce.count * sizeof(struct food);
             struct msg_food_list *command = malloc(sizeof(long) + message_size);
-            msgrcv(user_queue, command, message_size, MSG_STOCK, 0);
+            msgrcv(user_queue, command, message_size, MSG_FOOD_LIST, 0);
             
-            msgsnd(rest->id , command, message_size, 0);
+            //msgsnd(rest->id , command, message_size, 0);
 
-            remove_foods_in_stock(rest, command_announce.restaurant_name, command, command_announce.count);
+            if (remove_foods_in_stock(rest, command, command_announce.count)) {
+                msg.value = COMMAND_ACK;
+                
+                sleep(TIME_DELIVERING);
+                sem_post(sem_drivers);
+            
+                msgsnd(user_queue, &msg, MSG_SIZE(long), 0);
+            }
+            else {
+                msg.value = COMMAND_NACK;
+                
+                sem_post(sem_drivers);
+            
+                msgsnd(user_queue, &msg, MSG_SIZE(long), 0);
+            }
+
             free(command);
-            
-            sleep(TIME_DELIVERING);
-            sem_post(sem_drivers);
-            printf("livraison effectuée !\n");
-            
-            msg.value = COMMAND_ACK;
-            msgsnd(user_queue, &msg, MSG_SIZE(long), 0);
             
         } else {
             PANIC("Unknown message received\n");
