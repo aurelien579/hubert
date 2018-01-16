@@ -8,7 +8,10 @@
 
 #define MSG_SIZE(T) (sizeof(struct msg_##T) - sizeof(long))
 
-#define NAME_MAX        42
+#define NAME_MAX        20
+#define REST_MAX        20
+#define FOOD_MAX        20
+
 #define UBERT_KEY       1
 #define DRIVER_COUNT    5
 
@@ -28,6 +31,7 @@
 #define MSG_LONG                15
 #define MSG_REST                16
 #define MSG_FOOD_LIST           17
+#define COMMAND_ACK             100
 
 struct food {
     char    name[NAME_MAX];
@@ -36,24 +40,13 @@ struct food {
 
 struct stock {
     int 	     count;
-    struct food *foods; /* Array of size count */
-};
-
-struct list {
-    struct list         *next;
-    int                  id;
-    char                 name[NAME_MAX];
-};
-
-struct restaurant_info {
-    char            name[NAME_MAX];
-    struct stock    stock;
+    struct food  foods[FOOD_MAX]; /* Array of size count */
 };
 
 struct restaurant {
-    struct restaurant      *next;
-    int                     id;
-    struct restaurant_info  info;
+    int          id;
+    char         name[NAME_MAX];
+    struct stock stock;
 };
 
 struct user {
@@ -94,8 +87,8 @@ struct msg_food_list {
 } __attribute__((packed));
 
 struct msg_restaurant_list {
-    long                   type;
-    struct restaurant_info rest[];
+    long              type;
+    struct restaurant rest[];
 } __attribute__((packed));
 
 #endif
