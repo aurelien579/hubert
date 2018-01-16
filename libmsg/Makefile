@@ -1,13 +1,13 @@
-CC 		= gcc
-CFLAGS 	= -Wall -std=c99 -I../libmsg/include -D_GNU_SOURCE
-LFLAGS	= -pthread -lmsg -L../libmsg/
-TARGET 	= client
+CC 	= gcc
+CFLAGS 	= -Wall -std=c99 -Iinclude -D_GNU_SOURCE
+LFLAGS	= -pthread
+TARGET 	= libmsg.a
 OBJS 	= $(patsubst %.c, %.o, $(wildcard src/*.c))
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $^ -o $@ $(LFLAGS)
+	ar rcs $@ $^
 
 %.o: %.c
 	$(CC) $(CFLAGS) $^ -c -o $@

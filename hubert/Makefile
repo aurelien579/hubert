@@ -1,6 +1,6 @@
 CC 		= gcc
-CFLAGS 	= -Wall -std=c99 -Iinclude -D_GNU_SOURCE
-LFLAGS	= -pthread
+CFLAGS 	= -Wall -std=c99 -I../libmsg/include -D_GNU_SOURCE
+LFLAGS	= -pthread -lmsg -L../libmsg/
 TARGET 	= hubert
 OBJS 	= $(patsubst %.c, %.o, $(wildcard src/*.c))
 

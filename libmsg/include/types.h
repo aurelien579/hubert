@@ -23,16 +23,18 @@
 #define MSG_REST_STATUS         6
 #define MSG_OFFER_REQUEST       7
 #define MSG_DELIVERY_STATUS     8
-#define MSG_STOCK_REQUEST       9
-#define MSG_COMMAND_ANNOUNCE    10
-#define MSG_STOCK_ANNOUNCE      11
-#define MSG_REST_LIST           12
-#define MSG_STOCK 		        14
+#define MSG_COMMAND_ANNOUNCE    9
+#define MSG_STOCK_ANNOUNCE      10
+#define MSG_REST_LIST           11
+#define MSG_STOCK 		        12
 #define MSG_LONG                15
 #define MSG_REST                16
 #define MSG_FOOD_LIST           17
 #define COMMAND_ACK             100
 #define COMMAND_NACK            101
+
+#define STOCK_REQUEST           18
+#define COMMAND                 19
 
 struct food {
     char    name[NAME_MAX];
@@ -60,16 +62,6 @@ struct msg_state {
     long    type;
     long    pid;
     char    name[NAME_MAX];
-} __attribute__((packed));
-
-struct msg_stock_request {
-    long type;
-} __attribute__((packed));
-
-struct msg_command_announce {
-    long type;
-    int count;
-    char restaurant_name[NAME_MAX];
 } __attribute__((packed));
 
 struct msg_long {

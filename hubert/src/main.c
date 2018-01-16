@@ -1,4 +1,5 @@
 #include <types.h>
+#include <msg.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -16,38 +17,46 @@
 
 #include "hubert_process.h"
 
-#define UPDATE_STOCK_DELAY  1   /* In seconds */
+#define UPDATE_STOCK_DELAY  5   /* In seconds */
 
-/*static void list_print(struct list *l)
-{
-    struct list *cur = l;
-
-    while (cur) {
-        printf("%s\n", cur->name);
-        cur = cur->next;
+static void update_restaurants()
+{   
+    printf("update_restaurants()\n");
+    int mem_key = shmget(1500, sizeof(struct shared_memory), IPC_CREAT | 0666);
+    struct shared_memory *mem = shmat(mem_key, 0, 0);
+    
+    for (int i = 0; i < mem->rests_number; i++) {
+            print_rest(&mem->restaurants[i]);
+        }
+        printf("\n\n");
+    
+    for (int i = 0; i < mem->rests_number; i++) {        
+        int queue = msgget(mem->restaurants[i].id, IPC_CREAT | 0666);
+        struct msg_long stock_request = { MSG_LONG, STOCK_REQUEST };
+        msgsnd(queue, &stock_request, MSG_SIZE(long), 0);
+        
+        struct restaurant rest;
+        recv_restaurant(queue, &rest);
+        
+        update_stock(&mem->restaurants[i], &rest.stock, 1);
     }
-}
-
-void print_rests(struct restaurant *rests)
-{
-    struct restaurant *cur = rests;
-
-    while (cur) {
-        printf("%s\n", cur->info.name);
-        cur = cur->next;
-    }
-}*/
-
-static void update_stock()
-{
-    //printf("updating stocks...\n");
+    
+    for (int i = 0; i < mem->rests_number; i++) {
+            print_rest(&mem->restaurants[i]);
+        }
 }
 
 static void updating_process()
 {
+    sem_t *mutex = sem_open(SEM_MUTEX, 0);
+    
     while (1) {
-        update_stock();
         sleep(UPDATE_STOCK_DELAY);
+        printf("update\n");
+        
+        sem_wait(mutex);
+        update_restaurants();
+        sem_post(mutex);
     }
 }
 

@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define START_ID    2010
 
 static struct user *g_users = NULL;
 static int g_updating_process_pid = -1;
@@ -38,6 +39,7 @@ static void on_close(int n)
         msgctl(cur->id, IPC_RMID, NULL);
         cur = cur->next;
     }
+    
     /* TODO: Disconnect users */
 
     exit(0);
@@ -122,16 +124,6 @@ void hubert_process(int updating_process_pid)
     
     signal(SIGINT, on_close);
 
-    hubert_add_restaurant(mem, "Name test", 45);
-    sem_wait(sem_mutex);
-    struct restaurant *rest= hubert_find_restaurant(mem, "Name test");
-    sem_post(sem_mutex);
-    rest->stock.count = 2;
-    strcpy(rest->stock.foods[0].name, "patate");
-    rest->stock.foods[0].quantity = 10;
-    strcpy(rest->stock.foods[1].name, "chips");
-    rest->stock.foods[1].quantity = 250000;
-
     permanent_queue = msgget(UBERT_KEY, IPC_CREAT | 0666);
 
     if (permanent_queue < 0) {
@@ -166,12 +158,18 @@ void hubert_process(int updating_process_pid)
             }
         } else if (type == MSG_REST_REGISTER) {
             
-            int id = mem->rests_number + 1;
-            sem_wait(sem_mutex);                  
+            int id = mem->rests_number + 1 + START_ID;
+            sem_wait(sem_mutex);   
+            printf("new restaurant\n");               
             hubert_add_restaurant(mem, msg.name, id);
             sem_post(sem_mutex);
-            struct msg_long cur = {MSG_REST_STATUS, 1 };
-            msgsnd(permament_queue, &cur, MSG_SIZE(long), 0);
+            struct msg_long cur = {MSG_REST_STATUS, id};
+            printf("id : %d\n", id);
+            msgsnd(permanent_queue, &cur, MSG_SIZE(long), 0);
+            
+            for (int i = 0; i < mem->rests_number; i++) {
+                print_rest(&mem->restaurants[i]);
+            }
             
         } else if (type == MSG_REST_UNREGISTER) {            
             sem_wait(sem_mutex);

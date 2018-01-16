@@ -1,4 +1,5 @@
 #include <types.h>
+#include <msg.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -46,39 +47,27 @@ int main(int argc, char **argv)
     printf("rest_count %ld\n", rest_count.value);
     
     for (int i = 0; i < rest_count.value; i++) {
-        struct msg_rest msg_rest;              
-        msgrcv(queue, &msg_rest, MSG_SIZE(rest), MSG_REST, 0);
+        struct restaurant rest;
+        recv_restaurant(queue, &rest);
         
-        int size = msg_rest.size;
+        printf("REST : %s\n", rest.name);
         
-        struct msg_food_list *msg_list = malloc(sizeof(long) + size);
-        msgrcv(queue, msg_list, size, MSG_FOOD_LIST, 0);  
-        
-        int nb_aliments = msg_rest.size / sizeof(struct food);
-        printf("REST : %s\n", msg_rest.name);
-        
-        for (int i=0; i < nb_aliments; i++){
-            printf("food : %s   quantity : %d\n", msg_list->foods[i].name, 
-                                                  msg_list->foods[i].quantity);
+        for (int i=0; i < rest.stock.count; i++){
+            printf("food : %s   quantity : %d\n", rest.stock.foods[i].name, 
+                                                  rest.stock.foods[i].quantity);
         }
-                      
-        free(msg_list);
-    }    
+    }
+    
     rest_count.value = MSG_COMMAND_ANNOUNCE;
     msgsnd(queue, &rest_count, MSG_SIZE(long), 0);
     printf("long send\n");
-    
-    struct msg_command_announce command_announce = { MSG_COMMAND_ANNOUNCE, 1 };
-    strcpy(command_announce.restaurant_name, "Name test");
-    msgsnd(queue, &command_announce, MSG_SIZE(command_announce), 0);
-    printf("command announce send\n");
-    
-    struct msg_food_list command = { MSG_FOOD_LIST };
-    strcpy( command.foods[0].name, "patate");
-    command.foods[0].quantity = 7;
-    int message_size = command_announce.count * sizeof(struct food);
-    msgsnd(queue, &command, message_size, 0);
-    printf("command send\n");
+       
+    struct restaurant cmd_rest;
+    strcpy(cmd_rest.name, "Pizza!");
+    cmd_rest.stock.count = 1;
+    strcpy(cmd_rest.stock.foods[0].name, "patate");
+    cmd_rest.stock.foods[0].quantity = 7;
+    send_restaurant(queue, &cmd_rest);
     
     struct msg_long msg_ack;
     msgrcv(queue, &msg_ack, MSG_SIZE(long), MSG_LONG, 0);

@@ -1,4 +1,5 @@
 #include <types.h>
+#include <msg.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -15,21 +16,34 @@
 #define SHMEM_KEY 50
 
 static int running = 1;
+static int shmemid = -1;
 
-void restaurant_on_int(int n)
-{
-	running = 0;
-}
+static int queue = -1;
 
-void restaurant_send_stock(int queue)
-{
+
+static void on_close(int n)
+{    
+    printf("closing\n");
+    running = 0;
+    
+    if (queue > 0) {
+        printf("queue closed\n");
+        msgctl(queue, IPC_RMID, 0);
+    }
+    
+    if (shmemid > 0) {
+        shmctl(shmemid, IPC_RMID, 0);
+    }
+    
+    exit(0);
 }
 
 void restaurant_process(int shmemid, int cook_pid)
 {
 	sem_t *mutex = sem_open("restaurant_mutex", O_CREAT, 0666, 1);
 	struct restaurant *rest = shmat(shmemid, 0, 0);
-	
+    signal(SIGINT, on_close);
+
 	int permanent_queue = msgget(UBERT_KEY, 0);
 
 	struct msg_state msg_state;
@@ -44,41 +58,60 @@ void restaurant_process(int shmemid, int cook_pid)
 		return;
 	}
 
-	int queue = msgget(msg_status.value, 0);
-	
-	signal(SIGINT, restaurant_on_int);
+	queue = msgget(msg_status.value, IPC_CREAT | 0666);
+    printf("id : %d\n", msg_status.value);
 	while (running) {
 		struct msg_long request;
 		msgrcv(queue, &request, MSG_SIZE(long), MSG_LONG, 0);
-		
-		int stock_count = rest->stock.count;
-		
-		struct msg_long announce = { MSG_LONG, stock_count };
-		msgsnd(queue, &announce, MSG_SIZE(long), 0);
-
-		struct msg_food_list *list = malloc(sizeof(long) + sizeof(struct food) * stock_count);
-		memcpy(list->foods, rest->stock.foods, sizeof(struct food) * stock_count);
-		list->type = MSG_FOOD_LIST;
-		msgsnd(queue, list, sizeof(struct food) * stock_count, 0);
+        
+        if (request.value == STOCK_REQUEST) {
+            sem_wait(mutex);
+            send_restaurant(queue, rest);
+            sem_post(mutex);
+        } else if (request.value == COMMAND) {
+            struct restaurant cmd_rest;
+            recv_restaurant(queue, &cmd_rest);
+            sem_wait(mutex);
+            printf("Command received : \n");
+            print_rest(&cmd_rest);
+            printf("\n\n");
+            update_stock(rest, &cmd_rest.stock, 0);
+            
+            printf("After update :\n");
+            print_rest(rest);
+            printf("\n\n");
+            sem_post(mutex);
+            kill(cook_pid, SIGUSR1);
+        }
+        else {
+            printf("error : message non compris\n");
+        }
 	}
 	
+    kill(cook_pid, SIGKILL);
 	shmdt(rest);
 	sem_destroy(mutex);
 }
 
 void cook_on_update(int n)
 {
-}
-
-void cook_process(int shmemid)
-{
 	sem_t *mutex = sem_open("restaurant_mutex", O_CREAT, 0666, 1);
-	struct restaurant *rest = shmat(shmemid, 0, 0);
-	
-	signal(SIGUSR1, cook_on_update);	
-	
-	sem_destroy(mutex);
+    struct restaurant *rest = shmat(shmemid, 0, 0);
+    
+    sem_wait(mutex);
+    
+    for (int i = 0; i < rest->stock.count; i++) {
+        if (rest->stock.foods[i].quantity <= 10) {
+            printf("Je cuisine du %s\n", rest->stock.foods[i].name);
+            sleep(2);
+            rest->stock.foods[i].quantity += 5;
+        }
+    }
+    
+    sem_post(mutex);
+    
 	shmdt(rest);
+	sem_destroy(mutex);
 }
 
 int read_config(const char *filename, int shmemid)
@@ -93,17 +126,23 @@ int read_config(const char *filename, int shmemid)
 	if (fgets(rest->name, NAME_MAX, file) == NULL) {
 		return -1;
 	}
+    
+    rest->name[strlen(rest->name) - 1] = '\0';
 	
 	printf("Restaurant name : %s\n", rest->name);
 	
 	char buffer[512];
 	
 	while (fgets(buffer, 512, file) != NULL) {
-		sscanf(buffer, "%s:%d",  rest->stock.foods[rest->stock.count].name,
+		sscanf(buffer, "%s %d",  rest->stock.foods[rest->stock.count].name,
 					&rest->stock.foods[rest->stock.count].quantity);
+        
 		rest->stock.count++;
 	}
-
+    
+    printf("config read\n");
+    print_rest(rest);
+    
 	shmdt(rest);
 	
 	return 1;
@@ -112,7 +151,7 @@ int read_config(const char *filename, int shmemid)
 int main(int argc, char **argv)
 {
 	int pid;
-	int shmemid = shmget(SHMEM_KEY, sizeof(struct restaurant), IPC_CREAT | 0666);
+	shmemid = shmget(SHMEM_KEY, sizeof(struct restaurant), IPC_CREAT | 0666);
 	
 	if (read_config("config.txt", shmemid) < 0) {
 		fprintf(stderr, "Invalid config\n");
@@ -121,10 +160,11 @@ int main(int argc, char **argv)
 
 	pid = fork();
 	if (pid == 0) {
-		cook_process(shmemid);
+        signal(SIGUSR1, cook_on_update);
+        while (1);
 		exit(0);
 	} else {
-		restaurant_process(shmemid, pid);	
+		restaurant_process(shmemid, pid);
 	}
 
 	shmctl(shmemid, IPC_RMID, NULL);
