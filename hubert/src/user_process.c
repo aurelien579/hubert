@@ -59,22 +59,19 @@ void user_process(int permanent_queue, int id, const char *username)
         PANIC("opening user queue");
     }
 
-    struct msg_long status;
-    status.type = MSG_USER_STATUS;
-    status.value = id;
-    msgsnd(permanent_queue, &status, MSG_SIZE(long), 0);
+	send_long(permanent_queue, MSG_USER_STATUS, id);
 
     while (1) {
-        struct msg_long msg;
-        msgrcv(user_queue, &msg, MSG_SIZE(long), MSG_LONG, 0);
+		long request;
+        recv_long(user_queue, MSG_LONG, &request);
 
-        if (msg.value == MSG_OFFER_REQUEST) {
-            user_log("MSG_OFFER_REQUEST\n");
+        if (request == OFFER_REQUEST) {		
+            user_log("OFFER_REQUEST\n");
             sem_wait(sem);
             send_restaurants(user_queue, mem);
-            sem_post(sem);
-        } else if(msg.value == MSG_COMMAND_ANNOUNCE) {
-            user_log("MSG_COMMAND_ANNOUCE\n");
+            sem_post(sem);		
+        } else if (request == COMMAND_ANNOUNCE) {
+            user_log("COMMAND_ANNOUCE\n");
 
             sem_t *sem_drivers = sem_open(SEM_DRIVERS, 0);
             sem_wait(sem_drivers);
@@ -109,20 +106,14 @@ void user_process(int permanent_queue, int id, const char *username)
                 user_log("\n\n");
                 send_restaurant(rest_queue, &received_rest);
 
-                msg.value = COMMAND_ACK;
-
                 sleep(TIME_DELIVERING);
                 sem_post(sem_drivers);
 
-                msgsnd(user_queue, &msg, MSG_SIZE(long), 0);
+				send_long(user_queue, MSG_LONG, COMMAND_ACK);
             } else {
-                user_log("Command invalid\n");
-
-                msg.value = COMMAND_NACK;
-
+                user_log("Command invalid received\n");
                 sem_post(sem_drivers);
-
-                msgsnd(user_queue, &msg, MSG_SIZE(long), 0);
+				send_long(user_queue, MSG_LONG, COMMAND_NACK);
             }
         } else {
             PANIC("Unknown message received\n");

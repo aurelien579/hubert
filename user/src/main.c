@@ -62,11 +62,8 @@ int main(int argc, char **argv)
     }
     printf("%d\n", status.value);
 
-    struct msg_long request;
-    request.type = MSG_LONG;
-    request.value = MSG_OFFER_REQUEST;
-    msgsnd(queue, &request, sizeof(int), 0);
-
+    send_long(queue, MSG_LONG, OFFER_REQUEST);
+    
     struct msg_long rest_count;
     msgrcv(queue, &rest_count, MSG_SIZE(long), MSG_LONG, 0);
 
@@ -83,10 +80,8 @@ int main(int argc, char **argv)
                                                   rest.stock.foods[i].quantity);
         }
     }
-
-    rest_count.value = MSG_COMMAND_ANNOUNCE;
-    msgsnd(queue, &rest_count, MSG_SIZE(long), 0);
-    printf("long send\n");
+    
+    send_long(queue, MSG_LONG, COMMAND_ANNOUNCE);
 
     struct restaurant cmd_rest;
     strcpy(cmd_rest.name, "Pizza!");
@@ -95,12 +90,11 @@ int main(int argc, char **argv)
     cmd_rest.stock.foods[0].quantity = 7;
     send_restaurant(queue, &cmd_rest);
 
-    struct msg_long msg_ack;
-    msgrcv(queue, &msg_ack, MSG_SIZE(long), MSG_LONG, 0);
-    if (msg_ack.value == COMMAND_ACK) {
+    long ack;
+    recv_long(queue, MSG_LONG, &ack);
+    if (ack == COMMAND_ACK) {
         printf("commande reçue !\n");
-    }
-    else if (msg_ack.value == COMMAND_NACK) {
+    } else if (ack == COMMAND_NACK) {
         printf("commande non_expédiée : manque d'aliments dans le stock.\n");
     }
 

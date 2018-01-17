@@ -67,7 +67,7 @@ static void kill_user(struct user **users, const char *name)
     if (pid < 0) {
         PANIC("Hubert : unregister");
     }
-
+	
     kill(pid, SIGKILL);
     msgctl(queue, IPC_RMID, NULL);
 }
@@ -151,7 +151,7 @@ void hubert_process(int updating_process_pid)
 
     sem_drivers = malloc(sizeof(sem_t));
     sem_t *sem_drivers = sem_open(SEM_DRIVERS, O_CREAT, 0644, NB_DRIVERS);
-    if ( sem_drivers == SEM_FAILED) {
+    if (sem_drivers == SEM_FAILED) {
         PANIC("Hubert : sem_init");
     }
 

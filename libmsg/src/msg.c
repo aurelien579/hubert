@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <sys/msg.h>
 
+static inline int min(int a, int b)
+{
+    return (a < b)? a : b;}
+
 void print_rest(struct restaurant *rest)
 {
     printf("Restaurant : %s, nb aliments : %d\n", rest->name, rest->stock.count);
@@ -66,6 +70,54 @@ void update_stock(struct restaurant *rest, struct stock *command, int flag)
         }
     }
 }
+
+int recv_state_and_type(int queue, long *type, char *name, int len)
+{
+    struct msg_state msg;
+    if (msgrcv(queue, &msg, MSG_STATE_SIZE, 0, 0) < 0) {        return 0;
+    } else {
+        strncpy(name, msg.name, min(len, NAME_MAX));
+        *type = msg.type;
+        return 1;
+    }}
+
+int send_state(int queue, long type, const char *name, int len)
+{
+    struct msg_state msg = { type };
+    strncpy(msg.name, name, min(NAME_MAX, len));
+    if (msgsnd(queue, &msg, MSG_STATE_SIZE, 0) < 0) {        return 0;
+    } else {
+        return 1;
+    }}
+
+int send_long(int queue, long type, long value)
+{
+	struct msg_long msg = { type, value };
+	if (msgsnd(queue, &msg, MSG_LONG_SIZE, 0) < 0) {        return 0;
+    } else {        return 1;
+    }}
+
+int recv_long_and_type(int queue, long *type, long *value)
+{
+	struct msg_long msg;
+    if (msgrcv(queue, &msg, MSG_LONG_SIZE, 0, 0) < 0) {        return 0;
+    } else {    
+        *type = msg.type;
+        *value = msg.value;        
+        return 1;        
+    }}
+
+int recv_long(int queue, long type, long *value)
+{
+	struct msg_long msg;
+    msgrcv(queue, &msg, MSG_LONG_SIZE, type, 0);
+    if (msgrcv(queue, &msg, MSG_LONG_SIZE, 0, 0) < 0) {
+        return 0;
+    } else {    
+        *value = msg.value;        
+        return 1;        
+    }}
+
 void send_restaurant(int user_queue, struct restaurant *rest)
 {
     int food_list_size =  rest->stock.count * sizeof(struct food);

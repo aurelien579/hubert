@@ -20,33 +20,50 @@
 
 sem_t *sem_mutex;
 
-static void update_restaurants()
+static void update_restaurants(sem_t *mutex)
 {
-    int mem_key = shmget(1500, sizeof(struct shared_memory), IPC_CREAT | 0666);
+    int mem_key, queue;
+    struct restaurant restaurant;
+
+    mem_key = shmget(1500, sizeof(struct shared_memory), IPC_CREAT | 0666);
+    if (mem_key < 0) {        fprintf(stderr, "[ERROR] shmget in update_restaurants().\n");
+        return;
+    }
+    
     struct shared_memory *mem = shmat(mem_key, 0, 0);
-
+    if (mem < 0) {        fprintf(stderr, "[ERROR] shmat in update_restaurants().\n");
+        return;
+    }
+    
     for (int i = 0; i < mem->rests_number; i++) {
-        printf("Updater : %d\n", i);
-        int queue = msgget(mem->restaurants[i].id, IPC_CREAT | 0666);
-        struct msg_long stock_request = { MSG_LONG, STOCK_REQUEST };
-        msgsnd(queue, &stock_request, MSG_SIZE(long), 0);
-
-        struct restaurant rest;
-        recv_restaurant(queue, &rest);
-
-        update_stock(&mem->restaurants[i], &rest.stock, 1);
+        printf("Updater : Updating : %s\n", mem->restaurants[i].name);
+        
+        queue = msgget(mem->restaurants[i].id, 0);
+        if (queue < 0) {            fprintf(stderr, "[ERROR] shmat in update_restaurants().\n");
+            shmdt(mem);
+            return;
+        }
+        
+        if (send_long(queue, MSG_LONG, STOCK_REQUEST) < 0) {            fprintf(stderr, "[ERROR] send_long in update_restaurants().\n");
+            shmdt(mem);
+            return;            
+        }
+        
+        recv_restaurant(queue, &restaurant);
+        
+        sem_wait(mutex);
+        update_stock(&mem->restaurants[i], &restaurant.stock, 1);
+        sem_post(mutex);
     }
 }
 
-static void updating_process()
+static void updating_process(sem_t *mutex)
 {
     while (1) {
         sleep(UPDATE_STOCK_DELAY);
         printf("Updater : update\n");
         
-        sem_wait(sem_mutex);
-        update_restaurants();        
-        sem_post(sem_mutex);
+        update_restaurants(mutex);        
     }
 }
 
@@ -54,14 +71,14 @@ int main(int argc, char **argv)
 {
     sem_mutex = sem_open(SEM_MUTEX, O_CREAT | O_EXCL, 0644, 1);
     if (sem_mutex == SEM_FAILED) {
-        printf("failed open semaphore mutex\n");
+        fprintf(stderr, "[ERROR] Failed to open sem_mutex\n");
         exit(-1);
     }
 	
     int pid = fork();
 
     if (pid == 0) {
-        updating_process();
+        updating_process(sem_mutex);
     } else {
         hubert_process(pid);
     }
