@@ -1,3 +1,4 @@
-Pizza!
+Pizza2!
 pizzas 10
-patate 20	
+patate 20
+patate2 20

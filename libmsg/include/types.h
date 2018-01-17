@@ -60,7 +60,7 @@ struct user {
 
 struct msg_state {
     long    type;
-    long    pid;
+    //long    pid;
     char    name[NAME_MAX];
 } __attribute__((packed));
 

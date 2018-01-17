@@ -2,8 +2,9 @@
 #define HUBERT_PROCESS_H
 
 #include <types.h>
+#include <semaphore.h>
 
-#define SEM_MUTEX            "shared_mem_mutex"
+#define SEM_MUTEX            "hubert_mutex"
 #define SEM_DRIVERS          "livreurs"
 #define NB_DRIVERS           10
 #define TIME_DELIVERING      2
@@ -12,6 +13,8 @@ struct shared_memory {
     struct restaurant   restaurants[REST_MAX];
     int                 rests_number;
 };
+
+extern sem_t *sem_mutex;
 
 void hubert_process(int updating_process_pid);
 
