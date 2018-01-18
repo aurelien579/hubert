@@ -1,5 +1,5 @@
 #include <types.h>
-#include "hubert_process.h"
+#include "hubert.h"
 #include "user_process.h"
 
 #include <stdlib.h>
@@ -17,16 +17,19 @@
 #include <stdarg.h>
 #include <msg.h>
 
-#define START_ID    2010
 
-static struct user *g_users = NULL;
-static int g_updating_process_pid = -1;
+struct hubert_process {
+    int permanent_queue;
+    int mem_key;
+    int updating_process_pid;
+    struct user *users;
+    struct shared_memory *mem;
+    sem_t *sem_drivers;
+};
 
-static int permanent_queue;
-static sem_t *sem_drivers;
-static int mem_key;
+static struct hubert_process hubert = { -1, -1, -1, NULL, NULL, NULL };
 
-static void on_close(int n);
+static void hubert_close(int n);
 
 static void hubert_log(const char *str, ...)
 {
@@ -38,14 +41,13 @@ static void hubert_log(const char *str, ...)
     va_end(args);
 }
 
-
-static int user_del(struct user **list, const char *name)
+static int user_del(const char *name)
 {
-    struct user **cur = list;
+    struct user **cur = &hubert.users;
 
     while (*cur) {
         if (strncmp((*cur)->name, name, NAME_MAX) == 0) {
-            int temp = (*cur)->id;
+            int temp = (*cur)->pid;
             *cur = (*cur)->next;
 
             return temp;
@@ -57,40 +59,47 @@ static int user_del(struct user **list, const char *name)
     return -1;
 }
 
-static void kill_user(struct user **users, const char *name)
+static void kill_user(const char *name)
 {
     hubert_log("Killing user %s\n", name);
     
-    int pid = user_del(users, name);
+    int pid = user_del(name);
     int queue = msgget(pid, 0666);
     
     if (pid < 0) {
-        PANIC("Hubert : unregister");
+        PANIC(hubert_close, "Hubert : unregister");
     }
-	
+
     kill(pid, SIGKILL);
     msgctl(queue, IPC_RMID, NULL);
 }
 
-static void on_close(int n)
+static void hubert_close(int n)
 {
-    shmctl(mem_key, IPC_RMID, NULL);
-
     printf("\rClosing Hubert\n");
 
-    if (g_updating_process_pid > 0) {
-        kill(g_updating_process_pid, SIGTERM);
-    }
-
-    struct user *cur = g_users;
+    struct user *cur = hubert.users;
     while (cur) {
-        kill_user(&g_users, cur->name);
+        kill_user(cur->name);
         cur = cur->next;
     }
-    msgctl(permanent_queue, IPC_RMID, NULL);
-    sem_close(sem_mutex);
-    sem_unlink(SEM_MUTEX);
-    exit(0);
+    
+    if (hubert.mem) {
+        for (int i = 0; i < hubert.mem->rests_number; i++) {            int rest_queue = msgget(hubert.mem->restaurants[i].id, 0);
+            if (rest_queue >= 0) {                msgctl(rest_queue, IPC_RMID, NULL);
+            }
+        }
+        
+        shmdt(hubert.mem);
+    }
+
+    if (hubert.mem_key >= 0) {
+        shmctl(hubert.mem_key, IPC_RMID, NULL);    }
+    
+    if (hubert.permanent_queue >= 0) {
+        msgctl(hubert.permanent_queue, IPC_RMID, NULL);    }
+    
+    main_close(0);
 }
 
 void hubert_add_restaurant(struct shared_memory *ptr, const char *name, int id)
@@ -123,90 +132,134 @@ struct restaurant *hubert_find_restaurant(struct shared_memory *mem, char *name)
     return NULL;
 }
 
-static void add_user(struct user **users, const char *name, int id)
+static int generate_user_id()
 {
-    struct user *user = malloc(sizeof(struct user));
-    user->id = id;
-    strncpy(user->name, name, NAME_MAX);
-    user->next = *users;
-
-    *users = user;
+    static int last_id = USER_FIRST_ID;
+    return last_id++;
 }
 
-
-
-void hubert_process(int updating_process_pid)
+static int generate_rest_id()
 {
-    mem_key = shmget(1500, sizeof(struct shared_memory), IPC_CREAT | 0666);
-    struct shared_memory *mem = shmat(mem_key, 0, 0);
-    g_updating_process_pid = updating_process_pid;
+    static int last_id = REST_FIRST_ID;
+    return last_id++;
+}
 
-    signal(SIGINT, on_close);
+static int user_exists(const char *name)
+{
+    struct user *cur = hubert.users;
+    while (cur) {        if (strncmp(name, cur->name, NAME_MAX) == 0) {            return 1;
+        }
+        cur = cur->next;
+    }
+    
+    return 0;}
 
-    permanent_queue = msgget(UBERT_KEY, IPC_CREAT | 0666);
+static void set_user_pid(int id, int pid)
+{
+    struct user *cur = hubert.users;
+    while (cur) {
+        if (cur->id == id) {
+            cur->pid = pid;
+        }
+        cur = cur->next;
+    }}
 
-    if (permanent_queue < 0) {
-        PANIC("Hubert : msgget");
+static int add_user(const char *name)
+{
+    if (user_exists(name)) {        return -1;
+    }
+    
+    struct user *user = malloc(sizeof(struct user));
+    user->id = generate_user_id();
+    strncpy(user->name, name, NAME_MAX);
+    
+    user->next = hubert.users;
+    hubert.users = user;
+    
+    return user->id;
+}
+
+void hubert_process(sem_t *sem_mutex)
+{
+    signal(SIGINT, hubert_close);
+    
+    hubert.mem_key = shmget(1500, sizeof(struct shared_memory), IPC_CREAT | 0666);
+    if (hubert.mem_key < 0) {
+        PANIC(hubert_close, "Hubert : fail shmget.");
+    }
+    
+    hubert.mem = shmat(hubert.mem_key, 0, 0);
+    if (hubert.mem == (void *) -1) {
+        PANIC(hubert_close, "Hubert : fail in oppening shared_memory.");
     }
 
-    sem_drivers = malloc(sizeof(sem_t));
-    sem_t *sem_drivers = sem_open(SEM_DRIVERS, O_CREAT, 0644, NB_DRIVERS);
-    if (sem_drivers == SEM_FAILED) {
-        PANIC("Hubert : sem_init");
+    hubert.permanent_queue = msgget(UBERT_KEY, IPC_CREAT | 0666);
+    if (hubert.permanent_queue < 0) {
+        PANIC(hubert_close, "Hubert : Failed to open permanent_queue.");
+    }
+    
+    printf("permanent queue %d\n", hubert.permanent_queue);
+
+    hubert.sem_drivers = sem_open(SEM_DRIVERS, O_CREAT, 0644, NB_DRIVERS);
+    if (hubert.sem_drivers == SEM_FAILED) {
+        PANIC(hubert_close, "Hubert : sem_init.");
     }
 
     struct msg_state msg;
-
     while (1) {
         hubert_log("Reading...\n");
-        msgrcv(permanent_queue, &msg, NAME_MAX * sizeof(char) + sizeof(long), 0, 0); // a tester option choisi
+        if (msgrcv(hubert.permanent_queue, &msg, MSG_STATE_SIZE, 0, 0) < 0) {
+            printf("Hubert : msgrcv interrupted.\n");
+            continue;
+        }
+        
+        /* TODO: Try to remove these lines */
         int type = msg.type;
         msg.type = -1;
 
         if (type == MSG_USER_CONNECT) {
             hubert_log("RECV MSG_USER_CONNECT\n");
-
-            int pid = fork();
-            if (pid == 0) {
-                signal(SIGINT, SIG_DFL);
-                user_process(permanent_queue, getpid(), msg.name);
-                exit(0);
-            } else {
-                hubert_log("pid : %d\n", pid);
-                add_user(&g_users, msg.name, pid);
+            
+            int id = add_user(msg.name);
+            send_long(hubert.permanent_queue, MSG_USER_STATUS, id);
+            
+            if (id > 0) {                int pid = fork();
+                if (pid == 0) {
+                    signal(SIGINT, SIG_DFL);
+                    user_process(id);
+                    fprintf(stderr, "[ERROR] User process didn't close.\n");
+                    exit(0);
+                } else {                    set_user_pid(id, pid);
+                }
             }
         } else if (type == MSG_REST_REGISTER) {
             hubert_log("RECV MSG_REST_REGISTER\n");
-            hubert_log("old rests : %d\n", mem->rests_number);
-            int id = mem->rests_number + 1 + START_ID;
+            hubert_log("old rests : %d\n", hubert.mem->rests_number);
+            int id = generate_rest_id();
             
             sem_wait(sem_mutex);
             hubert_log("ok sem_wait\n");
-            hubert_add_restaurant(mem, msg.name, id);
+            hubert_add_restaurant(hubert.mem, msg.name, id);
             sem_post(sem_mutex);
             
             struct msg_long cur = {MSG_REST_STATUS, id};
-            msgsnd(permanent_queue, &cur, MSG_SIZE(long), 0);
+            msgsnd(hubert.permanent_queue, &cur, MSG_SIZE(long), 0);
 
-            for (int i = 0; i < mem->rests_number; i++) {
-                print_rest(&mem->restaurants[i]);
+            for (int i = 0; i < hubert.mem->rests_number; i++) {
+                print_rest(&hubert.mem->restaurants[i]);
             }
 
         } else if (type == MSG_REST_UNREGISTER) {
             hubert_log("RECV MSG_REST_UNREGISTER\n");
             sem_wait(sem_mutex);
-            hubert_del_restaurant(mem, msg.name);
+            hubert_del_restaurant(hubert.mem, msg.name);
             sem_post(sem_mutex);
         } else if (type == MSG_USER_DISCONNECT) {
             hubert_log("RECV MSG_USER_DISCONNECT\n");
-            kill_user(&g_users, msg.name);
+            kill_user(msg.name);
         }
     }
-
-    shmdt(mem);
-    sem_destroy(sem_drivers);
-    msgctl(permanent_queue, IPC_RMID, NULL);
-
-    on_close(0);
+    
+    hubert_close(0);
 }
 

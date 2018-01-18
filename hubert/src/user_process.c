@@ -1,6 +1,6 @@
 #include <types.h>
 #include <msg.h>
-#include "hubert_process.h"
+#include "hubert.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -16,19 +16,22 @@
 #include <fcntl.h>
 #include <stdarg.h>
 
-static char g_username[NAME_MAX];
+struct user_process {
+    int id;};
+
+static struct user_process user;
 
 static void user_log(const char *str, ...)
 {
     va_list args;
 
     va_start(args, str);
-    printf("User (%s) : ", g_username);
+    printf("User %d : ", user.id);
     vprintf(str, args);
     va_end(args);
 }
 
-static void on_close(int n)
+static void user_close(int n)
 {
     exit(0);
 }
@@ -45,31 +48,29 @@ static void send_restaurants(int user_queue, struct shared_memory *mem)
     }
 }
 
-void user_process(int permanent_queue, int id, const char *username)
+void user_process(int id)
 {
-    strncpy(g_username, username, NAME_MAX);
-
+    user.id = id;
+    
     int mem_key = shmget(1500, sizeof(struct shared_memory), 0);
     struct shared_memory *mem = shmat(mem_key, 0, 0);
     sem_t *sem = sem_open(SEM_MUTEX, 0);
 
-    user_log("handle_user %d\n", id);
+    user_log("user_process start\n");
     int user_queue = msgget(id, IPC_CREAT | 0666);
     if (user_queue < 0) {
-        PANIC("opening user queue");
+        PANIC(user_close, "User : opening user queue");
     }
 
-	send_long(permanent_queue, MSG_USER_STATUS, id);
-
     while (1) {
-		long request;
+        long request;
         recv_long(user_queue, MSG_LONG, &request);
 
-        if (request == OFFER_REQUEST) {		
+        if (request == OFFER_REQUEST) {
             user_log("OFFER_REQUEST\n");
             sem_wait(sem);
             send_restaurants(user_queue, mem);
-            sem_post(sem);		
+            sem_post(sem);
         } else if (request == COMMAND_ANNOUNCE) {
             user_log("COMMAND_ANNOUCE\n");
 
@@ -81,7 +82,7 @@ void user_process(int permanent_queue, int id, const char *username)
 
             struct restaurant *hubert_rest = hubert_find_restaurant(mem, received_rest.name);
             if (hubert_rest == NULL) {
-                PANIC("Can't find restaurant");
+                PANIC(user_close, "Can't find restaurant");
             }
 
             user_log("Commande recue : \n\n");
@@ -109,14 +110,14 @@ void user_process(int permanent_queue, int id, const char *username)
                 sleep(TIME_DELIVERING);
                 sem_post(sem_drivers);
 
-				send_long(user_queue, MSG_LONG, COMMAND_ACK);
+                send_long(user_queue, MSG_LONG, COMMAND_ACK);
             } else {
                 user_log("Command invalid received\n");
                 sem_post(sem_drivers);
-				send_long(user_queue, MSG_LONG, COMMAND_NACK);
+                send_long(user_queue, MSG_LONG, COMMAND_NACK);
             }
         } else {
-            PANIC("Unknown message received\n");
+            PANIC(user_close, "Unknown message received\n");
         }
     }
 }

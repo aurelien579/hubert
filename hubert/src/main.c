@@ -14,11 +14,24 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "hubert_process.h"
+#include "hubert.h"
 
 #define UPDATE_STOCK_DELAY  5   /* In seconds */
 
+static int updating_process_pid = -1;
 sem_t *sem_mutex;
+
+void main_close(int n)
+{
+    if (updating_process_pid > 0) {
+        kill(updating_process_pid, SIGTERM);
+    }
+    
+    sem_close(sem_mutex);
+    sem_unlink(SEM_MUTEX);
+    
+    exit(n);
+}
 
 static void update_restaurants(sem_t *mutex)
 {
@@ -26,7 +39,8 @@ static void update_restaurants(sem_t *mutex)
     struct restaurant restaurant;
 
     mem_key = shmget(1500, sizeof(struct shared_memory), IPC_CREAT | 0666);
-    if (mem_key < 0) {        fprintf(stderr, "[ERROR] shmget in update_restaurants().\n");
+    if (mem_key < 0) {
+        fprintf(stderr, "[ERROR] shmget in update_restaurants().\n");
         return;
     }
     
@@ -44,9 +58,9 @@ static void update_restaurants(sem_t *mutex)
             return;
         }
         
-        if (send_long(queue, MSG_LONG, STOCK_REQUEST) < 0) {            fprintf(stderr, "[ERROR] send_long in update_restaurants().\n");
+        if (!send_long(queue, MSG_LONG, STOCK_REQUEST)) {            fprintf(stderr, "[ERROR] send_long in update_restaurants().\n");
             shmdt(mem);
-            return;            
+            return;
         }
         
         recv_restaurant(queue, &restaurant);
@@ -61,7 +75,7 @@ static void updating_process(sem_t *mutex)
 {
     while (1) {
         sleep(UPDATE_STOCK_DELAY);
-        printf("Updater : update\n");
+        printf("Updater : update\n");        
         
         update_restaurants(mutex);        
     }
@@ -71,16 +85,14 @@ int main(int argc, char **argv)
 {
     sem_mutex = sem_open(SEM_MUTEX, O_CREAT | O_EXCL, 0644, 1);
     if (sem_mutex == SEM_FAILED) {
-        fprintf(stderr, "[ERROR] Failed to open sem_mutex\n");
-        exit(-1);
+        PANIC(main_close, "[ERROR] Failed to open sem_mutex\n");
     }
-	
-    int pid = fork();
 
-    if (pid == 0) {
+    updating_process_pid = fork();
+    if (updating_process_pid == 0) {
         updating_process(sem_mutex);
     } else {
-        hubert_process(pid);
+        hubert_process(sem_mutex);
     }
 
     return 0;

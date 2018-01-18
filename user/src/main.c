@@ -13,18 +13,18 @@
 static int connected = 0;
 static char username[NAME_MAX];
 
-static void on_close(int n)
+static void client_close(int n)
 {
     printf("\rClosing User\n");
     
     if (connected) {
         int queue = msgget(UBERT_KEY, 0666);
-        if (queue >= 0) {        
+        if (queue >= 0) {
             struct msg_state disconnect_msg;
             disconnect_msg.type = MSG_USER_DISCONNECT;
             strncpy(disconnect_msg.name, username, NAME_MAX);
             
-            msgsnd(queue, &disconnect_msg, MSG_SIZE(state), 0);            
+            msgsnd(queue, &disconnect_msg, MSG_STATE_SIZE, 0);            
         }
     }
     
@@ -33,15 +33,15 @@ static void on_close(int n)
 
 int main(int argc, char **argv)
 {
-    signal(SIGINT, on_close);
+    signal(SIGINT, client_close);
     
     int permanent_queue = msgget(UBERT_KEY, 0666);
     if (permanent_queue < 0) {
-        PANIC("Can't connect to Hubert.");
+        PANIC(client_close, "Can't connect to Hubert.");
     }
     
     if (argc < 2) {
-        PANIC("Please provide a username.");
+        PANIC(client_close, "Please provide a username.");
     }
     
     strncpy(username, argv[1], NAME_MAX);
@@ -49,23 +49,25 @@ int main(int argc, char **argv)
     struct msg_state msg;
     msg.type = MSG_USER_CONNECT;
     strncpy(msg.name, username, NAME_MAX);
-    msgsnd(permanent_queue, &msg, MSG_SIZE(state), 0);
-    connected = 1;
-    printf("connecté\n");
+    msgsnd(permanent_queue, &msg, MSG_STATE_SIZE, 0);
+    
 
     struct msg_long status;
-    msgrcv(permanent_queue, &status, MSG_SIZE(long), MSG_USER_STATUS, 0);
-
+    msgrcv(permanent_queue, &status, MSG_LONG_SIZE, MSG_USER_STATUS, 0);
+    
+    connected = 1;
+    printf("connecté %d\n", status.value);
+    
     int queue = msgget(status.value, IPC_CREAT | 0666);
     if (queue < 0) {
-        PANIC("can't open queue");
+        PANIC(client_close, "can't open queue");
     }
     printf("%d\n", status.value);
 
     send_long(queue, MSG_LONG, OFFER_REQUEST);
     
     struct msg_long rest_count;
-    msgrcv(queue, &rest_count, MSG_SIZE(long), MSG_LONG, 0);
+    msgrcv(queue, &rest_count, MSG_LONG_SIZE, MSG_LONG, 0);
 
     printf("rest_count %ld\n", rest_count.value);
 
@@ -98,5 +100,5 @@ int main(int argc, char **argv)
         printf("commande non_expédiée : manque d'aliments dans le stock.\n");
     }
 
-    on_close(0);
+    client_close(0);
 }

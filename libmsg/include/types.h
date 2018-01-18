@@ -1,10 +1,10 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#define PANIC(msg) do {                                                \
-    printf("[ERROR] %s at %s:%d\n", msg, __FILE__, __LINE__);          \
-    on_close(-1);                                                      \
-} while (0)                                                            \
+#define PANIC(f, msg) do {                                          \
+    printf("[ERROR] %s at %s:%d\n", msg, __FILE__, __LINE__);       \
+    f(-1);                                                            \
+} while (0)                                                         \
 
 #define MSG_SIZE(T) (sizeof(struct msg_##T) - sizeof(long))
 
@@ -24,7 +24,7 @@
 #define MSG_DELIVERY_STATUS     8
 #define MSG_STOCK_ANNOUNCE      10
 #define MSG_REST_LIST           11
-#define MSG_STOCK 		        12
+#define MSG_STOCK               12
 #define MSG_FOOD_LIST           17
 #define COMMAND_ACK             100
 #define COMMAND_NACK            101
@@ -38,8 +38,8 @@ struct food {
 };
 
 struct stock {
-    int 	     count;
-    struct food  foods[FOOD_MAX]; /* Array of size count */
+    int         count;
+    struct food foods[FOOD_MAX]; /* Array of size count */
 };
 
 struct restaurant {
@@ -51,6 +51,7 @@ struct restaurant {
 struct user {
     struct user    *next;
     int             id;
+    int             pid;
     char            name[NAME_MAX];
 };
 
@@ -87,7 +88,7 @@ struct msg_long {
  *  msg_rest is used 
  */
 #define MSG_REST                16
-#define MSG_REST_SIZE 	       (sizeof(char) * NAME_MAX + sizeof(int))
+#define MSG_REST_SIZE          (sizeof(char) * NAME_MAX + sizeof(int))
 struct msg_rest {
     long type;
     char name[NAME_MAX];
@@ -96,8 +97,8 @@ struct msg_rest {
 
 
 struct msg_food_list {
-	long 		type;
-	struct food foods[];
+    long        type;
+    struct food foods[];
 };
 
 #endif
