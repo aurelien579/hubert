@@ -12,172 +12,189 @@
 #include <sys/stat.h>
 #include <semaphore.h>
 #include <unistd.h>
+#include <stdarg.h>
 
-#define SHMEM_KEY 50
+struct rest {
+    char    name[NAME_MAX];
+    char    foods[FOODS_MAX][NAME_MAX];
+    int     quantities[FOODS_MAX];
+    int     foods_count;
+};
 
-static int running = 1;
+static sem_t *hubert_mutex = NULL;
 static int shmemid = -1;
+static int shmemid_hubert = -1;
+static int q = -1;
 
 
-static int queue = -1;
-
+static void disconnect()
+{    
+    struct msg_state msg = { HUBERT_DEST, REST_DISCONNECT, getpid() };
+    msgsnd(q, &msg, MSG_STATE_SIZE, 0);
+}
 
 static void on_close(int n)
 {
     printf("\rClosing Restaurant\n");
-    running = 0;
-    
-
-    if (queue > 0) {
-    
-        struct restaurant *rest = shmat(shmemid, 0, 0);
-        int permanent_queue = msgget(UBERT_KEY, 0);
-        
-        struct msg_state disconnect_msg;
-        disconnect_msg.type = MSG_REST_UNREGISTER;
-        strncpy(disconnect_msg.name, rest->name, NAME_MAX);
-        msgsnd(permanent_queue, &disconnect_msg, MSG_SIZE(state), 0);
-        
-        printf("queue closed\n");
-        msgctl(queue, IPC_RMID, 0);
-    }
 
     if (shmemid > 0) {
         shmctl(shmemid, IPC_RMID, 0);
+    }
+    
+    if (shmemid_hubert > 0) {
+        shmctl(shmemid_hubert, IPC_RMID, 0);
+    }
+
+    if (hubert_mutex != NULL) {
+        sem_destroy(hubert_mutex);
+        char pid[NAME_MAX];
+        sprintf(pid, "%d", getpid());
+        sem_unlink(pid);
+    }
+    
+    if (q >= 0) {
+        disconnect();
     }
 
     exit(0);
 }
 
-void restaurant_process(int shmemid, int cook_pid)
-{   
-    sem_t *mutex = sem_open("restaurant_mutex", O_CREAT, 0666, 1);
-    struct restaurant *rest = shmat(shmemid, 0, 0);
-    signal(SIGINT, on_close);
-
-    int permanent_queue = msgget(UBERT_KEY, 0);
-
-    struct msg_state msg_state;
-    msg_state.type = MSG_REST_REGISTER;
-    strcpy(msg_state.name, rest->name);
-    msgsnd(permanent_queue, &msg_state, MSG_STATE_SIZE, 0);
-
-    struct msg_long msg_status;
-    msgrcv(permanent_queue, &msg_status, MSG_LONG_SIZE, MSG_REST_STATUS, 0);
-    if (msg_status.value < 0) {
-        fprintf(stderr, "Can't connect to hubert\n");
-        return;
-    }
-
-    queue = msgget(msg_status.value, IPC_CREAT | 0666);
-    printf("id : %d\n", msg_status.value);
-    while (running) {
-        struct msg_long request;
-        msgrcv(queue, &request, MSG_SIZE(long), MSG_LONG, 0);
-
-        if (request.value == STOCK_REQUEST) {
-            sem_wait(mutex);
-            send_restaurant(queue, rest);
-            sem_post(mutex);
-        } else if (request.value == COMMAND) {
-            struct restaurant cmd_rest;
-            recv_restaurant(queue, &cmd_rest);
-            sem_wait(mutex);
-            printf("Command received : \n");
-            print_rest(&cmd_rest);
-            printf("\n\n");
-            update_stock(rest, &cmd_rest.stock, 0);
-
-            printf("After update :\n");
-            print_rest(rest);
-            printf("\n\n");
-            sem_post(mutex);
-            kill(cook_pid, SIGUSR1);
-        }
-        else {
-            printf("error : message non compris\n");
-        }
-    }
-
-    kill(cook_pid, SIGKILL);
-    shmdt(rest);
-    sem_destroy(mutex);
+static void rest_panic(const char *str, ...)
+{
+    va_list args;
+    va_start(args, str);
+    va_start(args, str);
+    fprintf(stderr, "REST : [PANIC] ");
+    vfprintf(stderr, str, args);
+    printf("\n");
+    on_close(0);
 }
 
-void cook_on_update(int n)
+void print_rest(struct rest *r)
 {
-    sem_t *mutex = sem_open("restaurant_mutex", O_CREAT, 0666, 1);
-    struct restaurant *rest = shmat(shmemid, 0, 0);
-
-    sem_wait(mutex);
-
-    for (int i = 0; i < rest->stock.count; i++) {
-        if (rest->stock.foods[i].quantity <= 10) {
-            printf("Je cuisine du %s\n", rest->stock.foods[i].name);
-            sleep(2);
-            rest->stock.foods[i].quantity += 5;
-        }
+    printf("Restaurant : %s, nb aliments : %d\n", r->name, r->foods_count);
+    for (int i = 0; i < r->foods_count; i++) {
+        printf("Aliment : %s quantity %d\n", r->foods[i], r->quantities[i]);
     }
-
-    sem_post(mutex);
-
-    shmdt(rest);
-    sem_destroy(mutex);
 }
 
 int read_config(const char *filename, int shmemid)
 {
-    struct restaurant *rest = shmat(shmemid, 0, 0);
-
+    struct rest *r = shmat(shmemid, 0, 0);
+    
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         return -1;
     }
 
-    if (fgets(rest->name, NAME_MAX, file) == NULL) {
+    if (fgets(r->name, NAME_MAX, file) == NULL) {
+        shmdt(r);
         return -1;
     }
 
-    rest->name[strlen(rest->name) - 1] = '\0';
+    r->name[strlen(r->name) - 1] = '\0';
 
-    printf("Restaurant name : %s\n", rest->name);
+    printf("Restaurant name : %s\n", r->name);
 
     char buffer[512];
 
     while (fgets(buffer, 512, file) != NULL) {
-        sscanf(buffer, "%s %d",  rest->stock.foods[rest->stock.count].name,
-                    &rest->stock.foods[rest->stock.count].quantity);
+        sscanf(buffer, "%s %d",  r->foods[r->foods_count],
+                                &r->quantities[r->foods_count]);
 
-        rest->stock.count++;
+        r->foods_count++;
     }
 
     printf("config read\n");
-    print_rest(rest);
+    print_rest(r);
 
-    shmdt(rest);
+    shmdt(r);
 
     return 1;
 }
 
-int main(int argc, char **argv)
+int update_hubert_mem()
 {
-    int pid;
-    shmemid = shmget(SHMEM_KEY, sizeof(struct restaurant), IPC_CREAT | 0666);
-
-    if (read_config("config.txt", shmemid) < 0) {
-        fprintf(stderr, "Invalid config\n");
-        return -1;
+    struct menu *m = shmat(shmemid_hubert, 0, 0);
+    struct rest *r = shmat(shmemid, 0, 0);
+    
+    if (m == (void *) -1) {
+        return 0;
     }
-
-    pid = fork();
-    if (pid == 0) {
-        signal(SIGUSR1, cook_on_update);
-        while (1);
-        exit(0);
-    } else {
-        restaurant_process(shmemid, pid);
+    
+    if (r == (void *) -1) {
+        return 0;
     }
-
-    shmctl(shmemid, IPC_RMID, NULL);
+    
+    sem_wait(hubert_mutex);
+    
+    strncpy(m->name, r->name, NAME_MAX);
+    for (int i = 0; i < r->foods_count; i++) {
+        strncpy(m->foods[i], r->foods[i], NAME_MAX);        
+    }
+    m->foods_count = r->foods_count;
+        
+    sem_post(hubert_mutex);
+    
+    return 1;
 }
 
+static int connect()
+{
+    int key = getpid();
+    
+    struct msg_state msg = { HUBERT_DEST, REST_CONNECT, key };
+    msgsnd(q, &msg, MSG_STATE_SIZE, 0);
+    
+    struct msg_status status;
+    msgrcv(q, &status, MSG_STATUS_SIZE, key, 0);
+    
+    return status.status;
+}
+
+
+int main(int argc, char **argv)
+{
+    signal(SIGINT, on_close);
+    
+    shmemid = shmget(1, sizeof(struct rest), IPC_CREAT | 0666);
+    if (shmemid <= 0) {
+        rest_panic("Can't open shmemid");
+        return -1;
+    }
+    
+    shmemid_hubert = shmget(getpid(), sizeof(struct menu), IPC_CREAT | 0666);
+    if (shmemid_hubert <= 0) {
+        rest_panic("Can't open shmemid_hubert");
+        return -1;
+    }
+    
+    char name[NAME_MAX];
+    sprintf(name, "%d", getpid());
+    hubert_mutex = sem_open(name, O_CREAT | 0666, 1);
+    if (hubert_mutex == NULL) {
+        rest_panic("Can't open hubert_mutex");
+    }
+    
+    if (!read_config("config.txt", shmemid)) {
+        rest_panic("Can't read config");
+        return -1;
+    }
+    
+    if (!update_hubert_mem()) {
+        rest_panic("Can't initialy update the menu");        
+    }
+    
+    q = msgget(HUBERT_KEY, 0);
+    if (q <= 0) {
+        rest_panic("Can't msgget");
+    }
+    
+    int status = connect();
+    if (status != STATUS_OK) {
+        rest_panic("Can't connect to hubert. Status : %d", status);
+    }
+    
+    on_close(0);
+    return 0;
+}
