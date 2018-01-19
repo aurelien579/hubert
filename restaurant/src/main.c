@@ -34,8 +34,8 @@ static void disconnect()
 }
 
 static void on_close(int n)
-{
-    printf("\rClosing Restaurant\n");
+{    
+    printf("\nClosing Restaurant\n");
 
     if (shmemid > 0) {
         shmctl(shmemid, IPC_RMID, 0);
@@ -142,7 +142,6 @@ int update_hubert_mem()
 static int connect()
 {
     int key = getpid();
-    
     struct msg_state msg = { HUBERT_DEST, REST_CONNECT, key };
     msgsnd(q, &msg, MSG_STATE_SIZE, 0);
     
@@ -157,22 +156,23 @@ int main(int argc, char **argv)
 {
     signal(SIGINT, on_close);
     
-    shmemid = shmget(1, sizeof(struct rest), IPC_CREAT | 0666);
-    if (shmemid <= 0) {
+    shmemid = shmget(1, sizeof(struct rest), IPC_CREAT | IPC_EXCL | 0666);
+    if (shmemid < 0) {
         rest_panic("Can't open shmemid");
         return -1;
     }
     
-    shmemid_hubert = shmget(getpid(), sizeof(struct menu), IPC_CREAT | 0666);
-    if (shmemid_hubert <= 0) {
+    shmemid_hubert = shmget(getpid(), sizeof(struct menu), IPC_CREAT | IPC_EXCL | 0666);
+    if (shmemid_hubert < 0) {
         rest_panic("Can't open shmemid_hubert");
         return -1;
     }
     
     char name[NAME_MAX];
     sprintf(name, "%d", getpid());
-    hubert_mutex = sem_open(name, O_CREAT | 0666, 1);
-    if (hubert_mutex == NULL) {
+    hubert_mutex = sem_open(name, O_CREAT | O_EXCL, 0666, 1);
+
+    if (hubert_mutex == SEM_FAILED) {
         rest_panic("Can't open hubert_mutex");
     }
     
@@ -195,6 +195,7 @@ int main(int argc, char **argv)
         rest_panic("Can't connect to hubert. Status : %d", status);
     }
     
+    while(1);
     on_close(0);
     return 0;
 }

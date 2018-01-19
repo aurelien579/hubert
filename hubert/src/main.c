@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <errno.h>
 
 struct rest {
     int     key;
@@ -25,17 +26,50 @@ struct user {
     int pid;
 };
 
+#define HUBERT_MEM_SEM  "hubert_mem"
+#define HUBERT_MEM_KEY  3212
+struct hubert_mem {    
+    struct rest rests[RESTS_MAX];
+    int rests_count;};
+
 static int running = 1;
 static int perm_queue = -1;
+static int hubert_mem_key = -1;
 
 static struct user users[USER_MAX];
 static int users_count = 0;
+static struct hubert_mem *hubert_mem = NULL;
 
-static struct rest rests[RESTS_MAX];
-static int rests_count = 0;
+void hubert_log(const char *str, ...);
 
 void main_close(int n)
-{    
+{
+    printf("\n");
+    hubert_log("Closing hubert.");
+    
+    if (hubert_mem) {        shmdt(hubert_mem);
+    }
+    
+    if (perm_queue >= 0) {
+        msgctl(perm_queue, IPC_RMID, 0);
+    }
+    
+    if (hubert_mem_key >= 0) {
+        shmctl(hubert_mem_key, IPC_RMID, 0);
+    }
+    
+    for (int i = 0; i < users_count; i++) {        int key = msgget(users[i].key, 0);
+        if (key >= 0) {
+            msgctl(key, IPC_RMID, 0);
+        }
+        
+        if (users[i].pid > 1) {
+            kill(users[i].pid, SIGTERM);            
+        }
+    }
+    
+    sem_unlink(HUBERT_MEM_SEM);
+    
     exit(0);
 }
 
@@ -55,28 +89,37 @@ void hubert_panic(const char *str)
     main_close(0);
 }
 
-
 int connect_rest(int key)
 {
-    if (rests_count >= RESTS_MAX) {
+    if (hubert_mem->rests_count >= RESTS_MAX) {
         return STATUS_FULL;
     }
     
-    for (int i = 0; i < rests_count; i++) {
-        if (rests[i].key == key) {
+    for (int i = 0; i < hubert_mem->rests_count; i++) {
+        if (hubert_mem->rests[i].key == key) {
             return STATUS_EXISTS;
         }
     }
     
-    rests[rests_count++].key = key;
+    int n = hubert_mem->rests_count;
+    
+    char key_str[NAME_MAX];
+    sprintf(key_str, "%d", key);
+    hubert_mem->rests[n].mutex = sem_open(key_str, 0);
+    if (hubert_mem->rests[n].mutex == SEM_FAILED) {        return -1;
+    }
+    
+    hubert_mem->rests[n].key = key;
+    hubert_mem->rests_count++;
+    
     return STATUS_OK;
 }
 
 void disconnect_rest(int key)
 {
-    for (int i = 0; i < rests_count; i++) {
-        if (rests[i].key == key) {
-            rests[i] = rests[--rests_count];
+    for (int i = 0; i < hubert_mem->rests_count; i++) {
+        if (hubert_mem->rests[i].key == key) {
+            hubert_mem->rests[i] = hubert_mem->rests[--hubert_mem->rests_count];
         }
     }
 }
@@ -121,12 +164,83 @@ void send_status(int dest, int status)
     msgsnd(perm_queue, &msg, MSG_STATUS_SIZE, 0);
 }
 
+static int send_menu(int q, int dest)
+{   
+    struct msg_menus menus;
+    int count = 0;
+    
+    for (int i = 0; i < hubert_mem->rests_count; i++) {        int rest_key = shmget(hubert_mem->rests[i].key, sizeof(struct menu), 0);
+        if (rest_key < 0) {            printf("USER : [WARNING] Can't get shared memory of rest %d\n",
+                   hubert_mem->rests[i].key);
+            continue;
+        }
+        
+        struct menu *rest_menu = shmat(rest_key, 0, 0);
+        if (rest_menu == (void *) -1) {            printf("USER : [WARNING] Can't attach shared memory of rest %d\n",
+                   hubert_mem->rests[i].key);
+            continue;
+        }
+        
+        sem_wait(hubert_mem->rests[i].mutex);
+        menus.menus[i] = *rest_menu;
+        sem_post(hubert_mem->rests[i].mutex);
+        
+        count++;
+        
+        shmdt(rest_menu);
+    }
+    
+    menus.menus_count = count;
+    menus.dest = dest;
+
+    if (msgsnd(q, &menus, MSG_MENUS_SIZE, 0) < 0) {
+        return 0;    }
+    
+    return 1;}
+
+/* TODO: Correct memory leak (make a user_close function that close the mutex */
+static void user(int key)
+{
+    int user_q = msgget(key, 0);
+    
+    if (user_q < 0) {        fprintf(stderr, "USER : [ERROR] Can't open user queue.\n");
+        return;
+    }
+    
+    struct msg_request request;
+    
+    while (1) {
+        printf("USER : [INFO] Reading...\n");
+        if (msgrcv(user_q, &request, MSG_REQUEST_SIZE, HUBERT_DEST, 0) < 0) {
+            printf("USER : [WARNING] Error while reading.\n");
+            continue;
+        }
+        
+        switch (request.type) {        case MENU_REQUEST:
+            printf("USER : [INFO] MENU_REQUEST\n");
+            if (!send_menu(user_q, key)) {                printf("USER : [WARNING] Error while sending menus : %s\n", strerror(errno));
+            }
+            break;
+        case COMMAND_REQUEST:
+            printf("USER : [INFO] COMMAND_REQUEST\n");
+            break;
+        }    }}
 
 int main(int argc, char **argv)
-{    
+{
+    signal(SIGINT, main_close);
+    
     perm_queue = msgget(HUBERT_KEY, IPC_CREAT | 0666);
-    if (perm_queue <= 0) {
+    if (perm_queue < 0) {
         hubert_panic("Can't open perm_queue");
+    }
+    
+    hubert_mem_key = shmget(HUBERT_MEM_KEY, sizeof(struct hubert_mem), IPC_CREAT | 0666);
+    if (hubert_mem_key < 0) {
+        hubert_panic("Can't get shared memory key");    }
+    
+    hubert_mem = shmat(hubert_mem_key, 0, 0);
+    if (hubert_mem == (void *) -1) {        hubert_panic("Can't attach shared memory");
     }
     
     struct msg_state state;
@@ -137,15 +251,29 @@ int main(int argc, char **argv)
             continue;
         }
         
+        int status = 0;
         switch (state.type) {
         case USER_CONNECT:
             hubert_log("Connecting user %d", state.key);
-            int status = connect_user(state.key);
-            if (status == STATUS_OK) {
-                
+            status = connect_user(state.key);
+
+            if (msgget(state.key, IPC_CREAT | 0666) < 0) {                hubert_log("Can't create user queue.");
+                send_status(state.key, STATUS_ERROR);
+                break;
             }
             
-            send_status(state.key, status);
+            if (status == STATUS_OK) {
+                int pid = fork();
+                if (pid == 0) {
+                    signal(SIGINT, SIG_DFL);
+                    user(state.key);
+                    return 0;
+                }
+                
+                set_user_pid(state.key, status);
+            }
+            
+            send_status(state.key, status);            
             break;
         case USER_DISCONNECT:
             hubert_log("Disconnecting user %d", state.key);
@@ -154,7 +282,11 @@ int main(int argc, char **argv)
             break;
         case REST_CONNECT:
             hubert_log("Connecting restaurant %d", state.key);
-            send_status(state.key, connect_rest(state.key));
+            status = connect_rest(state.key);
+            if (status < 0) {                hubert_log("Can't connect restaurant %d", state.key);
+            }
+            
+            send_status(state.key, status);
             break;
         case REST_DISCONNECT:
             hubert_log("Disconnecting restaurant %d", state.key);

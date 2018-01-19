@@ -3,8 +3,8 @@
 
 #define NAME_MAX        20
 #define USER_MAX        20
-#define RESTS_MAX       20
-#define FOODS_MAX       20
+#define RESTS_MAX       10
+#define FOODS_MAX       10
 
 #define HUBERT_KEY      50
 #define HUBERT_DEST     1
@@ -26,12 +26,13 @@ enum state_type {
 struct msg_state {
     long dest;
     enum state_type type;
-    int key;    
+    int key;
 };
 
 #define STATUS_OK       1
 #define STATUS_EXISTS   2
 #define STATUS_FULL     3
+#define STATUS_ERROR    4
 #define MSG_STATUS_SIZE (sizeof(int))
 struct msg_status {
     long dest;
@@ -40,7 +41,29 @@ struct msg_status {
 
 struct msg_menus {
     long dest;
-    struct menu menus[REST_MAX];
+    long menus_count;
+    struct menu menus[RESTS_MAX];
 };
-    
+#define MSG_MENUS_SIZE  (sizeof(struct msg_menus) - sizeof(long))
+
+enum menu_request_type {
+    MENU_REQUEST,
+    COMMAND_REQUEST,
+};
+
+struct msg_request {
+    long dest;
+    long type;
+};
+#define MSG_REQUEST_SIZE  (sizeof(long))
+
+struct msg_command {
+    long dest;
+    struct menu command;
+    char name[NAME_MAX];
+    char foods[FOODS_MAX][NAME_MAX];
+    char quantity[FOODS_MAX];
+    int foods_count;
+};
+
 #endif
