@@ -60,10 +60,10 @@ void restaurant_process(int shmemid, int cook_pid)
     struct msg_state msg_state;
     msg_state.type = MSG_REST_REGISTER;
     strcpy(msg_state.name, rest->name);
-    msgsnd(permanent_queue, &msg_state, MSG_SIZE(state), 0);
+    msgsnd(permanent_queue, &msg_state, MSG_STATE_SIZE, 0);
 
     struct msg_long msg_status;
-    msgrcv(permanent_queue, &msg_status, MSG_SIZE(long), MSG_REST_STATUS, 0);
+    msgrcv(permanent_queue, &msg_status, MSG_LONG_SIZE, MSG_REST_STATUS, 0);
     if (msg_status.value < 0) {
         fprintf(stderr, "Can't connect to hubert\n");
         return;

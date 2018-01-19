@@ -32,6 +32,12 @@
 #define STOCK_REQUEST           18
 #define COMMAND                 19
 
+struct menu {
+    char rest_name[NAME_MAX];
+    char foods[FOOD_MAX][NAME_MAX];
+    int  count;
+};
+
 struct food {
     char    name[NAME_MAX];
     int     quantity;
@@ -63,7 +69,6 @@ struct user {
  */
 #define MSG_USER_CONNECT        1
 #define MSG_USER_DISCONNECT     2
-#define MSG_REST_REGISTER       3
 #define MSG_REST_UNREGISTER     4
 #define MSG_STATE_SIZE         (sizeof(char) * NAME_MAX)
 struct msg_state {

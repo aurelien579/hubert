@@ -14,8 +14,8 @@
 #define TIME_DELIVERING      2
 
 struct shared_memory {
-    struct restaurant   restaurants[REST_MAX];
-    int                 rests_number;
+    struct menu   restaurants[REST_MAX];
+    int           rests_number;
 };
 
 //extern sem_t *sem_mutex;

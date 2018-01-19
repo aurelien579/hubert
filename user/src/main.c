@@ -1,6 +1,7 @@
 #include <types.h>
 #include <msg.h>
 
+#include <ncurses.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -86,7 +87,7 @@ int main(int argc, char **argv)
     send_long(queue, MSG_LONG, COMMAND_ANNOUNCE);
 
     struct restaurant cmd_rest;
-    strcpy(cmd_rest.name, "Pizza!");
+    strcpy(cmd_rest.name, "Pizza2!");
     cmd_rest.stock.count = 1;
     strcpy(cmd_rest.stock.foods[0].name, "patate");
     cmd_rest.stock.foods[0].quantity = 7;
