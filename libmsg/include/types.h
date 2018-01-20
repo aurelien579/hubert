@@ -15,6 +15,13 @@ struct menu {
     int foods_count;
 };
 
+struct command {
+    char name[NAME_MAX];
+    char foods[FOODS_MAX][NAME_MAX];
+    char quantities[FOODS_MAX];
+    int count;
+};
+
 enum state_type {
     USER_CONNECT,
     USER_DISCONNECT,
@@ -39,12 +46,22 @@ struct msg_status {
     int status;
 };
 
+#define COMMAND_SENT    1
+#define COMMAND_ARRIVED 2
+#define MSG_STATUS_COMMAND_SIZE (sizeof(struct msg_command_status) - sizeof(long))
+struct msg_command_status {
+    long dest;
+    char rest_name[RESTS_MAX];
+    int status;
+    int time;
+};
+
 struct msg_menus {
     long dest;
-    long menus_count;
     struct menu menus[RESTS_MAX];
+    long menus_count;
 };
-#define MSG_MENUS_SIZE  (sizeof(struct msg_menus) - sizeof(long))
+#define MSG_MENUS_SIZE      (sizeof(struct msg_menus) - sizeof(long))
 
 enum menu_request_type {
     MENU_REQUEST,
@@ -55,15 +72,12 @@ struct msg_request {
     long dest;
     long type;
 };
-#define MSG_REQUEST_SIZE  (sizeof(long))
+#define MSG_REQUEST_SIZE    (sizeof(long))
 
+#define MSG_COMMAND_SIZE    (sizeof(struct msg_command) - sizeof(long))
 struct msg_command {
     long dest;
-    struct menu command;
-    char name[NAME_MAX];
-    char foods[FOODS_MAX][NAME_MAX];
-    char quantity[FOODS_MAX];
-    int foods_count;
+    struct command command;
 };
 #define MSG_COMMAND_SIZE   (sizeof(msg_command) - sizeof(long))
 

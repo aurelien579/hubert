@@ -7,11 +7,22 @@
 #include <ctype.h>
 #include <time.h>
 
+#define OUT_STD     0
+#define OUT_FILE    1
+
 #define INFO    0
 #define ERROR   1
 #define PANIC   2
 
+#ifndef LOG_LEVEL
 #define LOG_LEVEL   INFO
+#endif
+
+#ifndef LOG_OUT
+#define LOG_OUT OUT_STD
+#endif
+
+static FILE *log_file = NULL;
 
 static const char *types[] = {
     "INFO ",
@@ -31,7 +42,7 @@ static inline char* strupr(char* s)
     return s;
 }
 
-static inline void __log(FILE *out, int level, const char *prefix, const char *s, va_list ap)
+static inline void __log(int level, const char *prefix, const char *s, va_list ap)
 {
     char prefix_buf[20];
     char time_buf[26];
@@ -42,9 +53,18 @@ static inline void __log(FILE *out, int level, const char *prefix, const char *s
     
     time(&timer);
     tm_info = localtime(&timer);
-
+    
     strftime(time_buf, 26, "%H:%M:%S", tm_info); 
     strncpy(prefix_buf, prefix, 20);
+    
+    FILE *out;
+    if (LOG_OUT == OUT_STD) {        if (level > INFO) {            out = stderr;
+        } else {            out = stdout;
+        }
+    } else if (LOG_OUT == OUT_FILE) {        if (log_file == NULL) {            return;
+        } else {            out = log_file;
+        }
+    }
     
     fprintf(out, "%s - %-6s : [%s] ", time_buf, strupr(prefix_buf), types[level]);
     vfprintf(out, s, ap);
@@ -59,7 +79,7 @@ static inline void name(const char *s, ...)             \
 {                                                       \
     va_list args;                                       \
     va_start(args, s);                                  \
-    __log(stdout, type, #prefix, s, args);              \
+    __log(type, #prefix, s, args);                      \
     va_end(args);                                       \}                                                       \
 
 #define LOG_FUNCTIONS(prefix)                           \
@@ -73,7 +93,7 @@ static inline void prefix##_panic(const char *s, ...)   \
 {                                                       \
     va_list args;                                       \
     va_start(args, s);                                  \
-    __log(stdout, PANIC, #prefix, s, args);             \
+    __log(PANIC, #prefix, s, args);                     \
     va_end(args);                                       \
     close(-1);                                          \}                                                       \
 
