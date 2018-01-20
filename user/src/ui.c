@@ -147,7 +147,8 @@ static int create_command(struct ui *u, struct command *c)
     int n = 0;
     
     for (int i = 0; i < u->lines_count; i++) {        if (u->lines[i].type == LINE_REST_NAME) {
-            if (rest_has_command(u, i)) {                
+            if (rest_has_command(u, i)) {
+                c[n].user_pid = getpid();
                 strncpy(c[n].name, u->lines[i].content, NAME_MAX);
                 c[n].count = 0;
                 while (u->lines[i + 1].type == LINE_FOOD_NAME) {

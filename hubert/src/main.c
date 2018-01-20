@@ -77,6 +77,11 @@ void main_close(int n)
 
 PANIC_FUNCTION(hubert, main_close)
 
+static int get_rest_pid(char *name)
+{
+    
+}
+
 int connect_rest(int key)
 {
     if (hubert_mem->rests_count >= RESTS_MAX) {
@@ -198,6 +203,11 @@ static int user_recv_command(int q, struct command *cmd)
     *cmd = msg.command;
 }
 
+static int send_command_to_rest(struct command *cmd)
+{
+    struct msg_command msg = {  };
+}
+
 /* TODO: Correct memory leak (make a user_close function that close the mutex */
 static void user(int key)
 {
@@ -227,6 +237,8 @@ static void user(int key)
             if (!user_recv_command(user_q, &cmd)) {
                 log_user_errro("user_recv_command error");
             }
+            
+            
             
             break;
         }    }}
