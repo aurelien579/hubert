@@ -188,6 +188,16 @@ static int send_menu(int q, int dest)
     
     return 1;}
 
+static int user_recv_command(int q, struct command *cmd)
+{
+    struct msg_command msg;
+    if (msgrcv(q, &msg, MSG_COMMAND_SIZE, HUBERT_DEST, 0) < 0) {
+        return -1;
+    }
+    
+    *cmd = msg.command;
+}
+
 /* TODO: Correct memory leak (make a user_close function that close the mutex */
 static void user(int key)
 {
@@ -213,6 +223,11 @@ static void user(int key)
             break;
         case COMMAND_REQUEST:
             log_user("COMMAND_REQUEST");
+            struct command cmd;
+            if (!user_recv_command(user_q, &cmd)) {
+                log_user_errro("user_recv_command error");
+            }
+            
             break;
         }    }}
 

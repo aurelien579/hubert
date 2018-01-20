@@ -6,7 +6,7 @@
 
 extern struct menu menus[RESTS_MAX];
 extern int menus_count;
-extern sem_t *mutex = NULL;
+extern sem_t *mutex;
 extern int command_progress;
 
 enum user_state {

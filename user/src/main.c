@@ -195,9 +195,11 @@ static int recv_command_status(char *rest, int *status, int *time)
         return 0;
     }
     
-    strncm(rest, msg.rest_name, NAME_MAX);
+    strncpy(rest, msg.rest_name, NAME_MAX);
     *status = msg.status;
     *time = msg.time;
+    
+    return 1;
 }
 
 static void on_command(struct command *c, int count)
@@ -210,7 +212,6 @@ static void on_command(struct command *c, int count)
         }
     }
     
-    command_progress = 0;
     for (int i = 0; i < count; i++) {
         if (send_command(&c[i]) < 0) {
             ui_set_state(ui, DISCONNECTED);
@@ -222,7 +223,7 @@ static void on_command(struct command *c, int count)
     int time;
     for (int i = 0; i < count * 2; i++) {
         if (recv_command_status(name, &status, &time)) {
-            
+            ui_set_command_status(ui, name, status, time);
         }
     }}
 
@@ -254,6 +255,8 @@ static void *ui_thread(void *data)
     ui_start(ui);
 
     ui_free(ui);
+    
+    return NULL;
 }
 
 int main(int argc, char **argv)
