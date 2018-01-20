@@ -10,7 +10,6 @@
 #define HUBERT_DEST     1
 
 struct menu {
-    int rest_pid;
     char name[NAME_MAX];
     char foods[FOODS_MAX][NAME_MAX];
     int foods_count;
