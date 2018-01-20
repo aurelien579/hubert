@@ -19,7 +19,7 @@
 #endif
 
 #ifndef LOG_OUT
-#define OUT_STD
+#define LOG_OUT OUT_STD
 #endif
 
 static FILE *log_file = NULL;

@@ -15,6 +15,13 @@ struct menu {
     int foods_count;
 };
 
+struct command {
+    char name[NAME_MAX];
+    char foods[FOODS_MAX][NAME_MAX];
+    char quantities[FOODS_MAX];
+    int count;
+};
+
 enum state_type {
     USER_CONNECT,
     USER_DISCONNECT,
@@ -41,8 +48,8 @@ struct msg_status {
 
 struct msg_menus {
     long dest;
-    long menus_count;
     struct menu menus[RESTS_MAX];
+    long menus_count;
 };
 #define MSG_MENUS_SIZE  (sizeof(struct msg_menus) - sizeof(long))
 
@@ -59,11 +66,7 @@ struct msg_request {
 
 struct msg_command {
     long dest;
-    struct menu command;
-    char name[NAME_MAX];
-    char foods[FOODS_MAX][NAME_MAX];
-    char quantity[FOODS_MAX];
-    int foods_count;
+    struct command command;
 };
 
 #endif
