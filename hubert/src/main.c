@@ -114,6 +114,21 @@ int connect_rest(int key)
     if (hubert_mem->rests[n].mutex == SEM_FAILED) {        return -1;
     }
     
+    int rest_key = shmget(key, sizeof(struct menu), 0);
+    if (rest_key < 0) {
+        log_user_error("Can't get shared memory of rest %d", key);
+        return -1;
+    }
+    
+    struct menu *rest_menu = shmat(rest_key, 0, 0);
+    if (rest_menu == (void *) -1) {
+        log_user_error("Can't attach shared memory of rest %d", key);
+        return -1;
+    }
+    
+    strncpy(hubert_mem->rests[n].name, rest_menu->name, NAME_MAX);
+    shmdt(rest_menu);
+    
     hubert_mem->rests[n].key = key;
     hubert_mem->rests_count++;
     
@@ -219,7 +234,7 @@ static int user_recv_command(int q, struct command *cmd)
 
 static int send_command_to_rest(int pid, struct command *cmd)
 {
-    log_hubert("send_command_to_rest");
+    log_hubert("send_command_to_rest %d", cmd->count);
     struct msg_command msg = { pid, *cmd };
     if (msgsnd(perm_queue, &msg, MSG_COMMAND_SIZE, 0) < 0) {
         return 0;

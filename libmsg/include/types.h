@@ -54,7 +54,7 @@ struct msg_status {
 #define MSG_STATUS_COMMAND_SIZE (sizeof(struct msg_command_status) - sizeof(long))
 struct msg_command_status {
     long dest;
-    char rest_name[RESTS_MAX];
+    char rest_name[NAME_MAX];
     int status;
     int time;
 };
