@@ -16,17 +16,17 @@
 #include <error.h>
 
 #define ALIMENTS_MAX    5
+#define COMMAND_MAX		10
+
+struct command_list {
+	struct command cmd;
+	struct command_list  *next;
+};
 
 struct cuisine_stock {
-<<<<<<< HEAD
-	char foods[ALIMENTS_MAX][NAME_MAX];
-	int quantities[ALIMENTS_MAX];
-	int food_count;
-=======
     char aliments[ALIMENTS_MAX][NAME_MAX];
     int quantities[ALIMENTS_MAX];
     int aliments_count;
->>>>>>> d2330f7ddd4fdc60ae931ee0f2dc94d4294d2e6f
 };
 
 struct receipe {
@@ -40,11 +40,8 @@ struct receipe {
 struct rest {
     char            name[NAME_MAX];
     struct receipe  recettes[FOODS_MAX];
-<<<<<<< HEAD
     int     		plates_count;
-=======
-    int             foods_count;
->>>>>>> d2330f7ddd4fdc60ae931ee0f2dc94d4294d2e6f
+    struct command_list *cmd_waiting;
 
 };
 
@@ -212,10 +209,31 @@ static int connect()
 
 int time_max_command(struct msg_command *cmd, struct rest *r) {
 	int time = 0;
-	for (int i = 0; i < cmd->foods_count; cmd->foods_count++) {
-		while (strcmp(cmd->)
+	for (int i = 0; i < cmd->count; i++) {
+		for (int j = 0; j < r->foods_count; j++) {
+			if (strcmp(cmd->foods[i], r->recettes[j].name) == 0 && time < r->recettes[j].temps_prep) {
+				time = r->recettes[j].temps_prep;
+			}
+		}
+	}	
+}
+
+void add_command(struct command_list *cmd) {
+	struct rest *r = shmat(shmemid, 0, 0);
+	struct command_list *temp = r->cmd_waiting; 
+	while ( temp->next != NULL) {
+		temp = temp->next;
+	}
+	temp->next = cmd;
+}
+
+void cook_aliments() {
 	
+}
+void kitchen_process() {
 	
+     cook_aliments(cmd);
+
 }
 
 int main(int argc, char **argv)
@@ -252,15 +270,16 @@ int main(int argc, char **argv)
     shmdt(r);
     //(unsigned long)time(NULL)
     if (fork() == 0) {
-		cichen_process(s);
+		kichen_process(s);
 	}
 	else {
 		while(1) {
 		struct msg_command command;
-		msgrcv(HUBERT_DEST, &command, MSG_COMMAND_SIZE, getpid(), 0);
-		struct rest *r = shmat(shmemid, 0, 0);
-		int time = time_max_command(&command, r);
-		
+		msgrcv(HUBERT_DEST, &command, MSG_COMMAND_SIZE, HUBERT_KEY, 0);
+		struct command_list *cmd = malloc(sizeof(struct command_list));
+		cmd->cmd = command.command;
+		cmd->next = NULL;
+		add_command(cmd);
 		}
 	}	
 
@@ -277,13 +296,6 @@ int main(int argc, char **argv)
     if (status != STATUS_OK) {
         rest_panic("Can't connect to hubert. Status : %d", status);
     }
-    
-<<<<<<< HEAD
-    
-    
-=======
-    while (1);
->>>>>>> d2330f7ddd4fdc60ae931ee0f2dc94d4294d2e6f
     
     on_close(0);
     return 0;
