@@ -18,9 +18,9 @@
 #define ALIMENTS_MAX    5
 
 struct cuisine_stock {
-	char aliments[ALIMENTS_MAX][NAME_MAX];
+	char foods[ALIMENTS_MAX][NAME_MAX];
 	int quantities[ALIMENTS_MAX];
-	int aliments_count;
+	int food_count;
 };
 
 struct receipe {
@@ -34,7 +34,7 @@ struct receipe {
 struct rest {
     char    		name[NAME_MAX];
     struct receipe  recettes[FOODS_MAX];
-    int     		foods_count;
+    int     		plates_count;
 
 };
 
@@ -82,8 +82,8 @@ static void on_close(int n)
 
 void print_rest(struct rest *r)
 {
-    printf("\nRestaurant : %s, nb aliments : %d\n", r->name, r->foods_count);
-    for (int i = 0; i < r->foods_count; i++) {
+    printf("\nRestaurant : %s, nb aliments : %d\n", r->name, r->plates_count);
+    for (int i = 0; i < r->plates_count; i++) {
         printf("\nPlat : %s           temps de préparation : %d\nAliments necessaires :\n",
                r->recettes[i].name, r->recettes[i].temps_prep);
         for (int j = 0; j < r->recettes[i].ingredients_count; j++) {
@@ -94,9 +94,8 @@ void print_rest(struct rest *r)
     }
 }
 
-int read_config(const char *filename, int shmemid)
+int read_config(const char *filename, struct rest *r, struct cuisine_stock *s)
 {
-    struct rest *r = shmat(shmemid, 0, 0);
     
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -119,24 +118,28 @@ int read_config(const char *filename, int shmemid)
 			//printf("checking aliment\n");
 			fgets(buffer, 512, file);
 			while (buffer[0] != '}') {
+				int n = r->plates_count;
+				sscanf(buffer, "%s %d", r->recettes[n].ingredients[r->recettes[n].ingredients_count],
+					   &r->recettes[n].quantities[r->recettes[n].ingredients_count]);
 				
-				sscanf(buffer, "%s %d", r->recettes[r->foods_count].ingredients[r->recettes[r->foods_count].ingredients_count],
-					   &r->recettes[r->foods_count].quantities[r->recettes[r->foods_count].ingredients_count]);
-
-				r->recettes[r->foods_count].ingredients_count++;
+				/*char ingredient[NAME_MAX] = r->recettes[n].ingredients[r->recettes[n].ingredients_count];
+				if (!ingredient_in_stock(s, ingredient) {
+					s->quantities[food_count] = 5;
+					strcpy(s->foods[food_count++], ingrediant);
+				}*/
+				
+				r->recettes[r->plates_count].ingredients_count++;
 				fgets(buffer, 512, file);
 			}
-			r->foods_count++;
+			r->plates_count++;
         }
         else {
-			sscanf(buffer, "%s %d" , r->recettes[r->foods_count].name, &r->recettes[r->foods_count].temps_prep);
+			sscanf(buffer, "%s %d" , r->recettes[r->plates_count].name, &r->recettes[r->plates_count].temps_prep);
 		}
     }
 
     log_rest("End reading config");
     print_rest(r);
-
-    shmdt(r);
 
     return 1;
 }
@@ -157,10 +160,10 @@ int update_hubert_mem()
     sem_wait(hubert_mutex);
     
     strncpy(m->name, r->name, NAME_MAX);
-    for (int i = 0; i < r->foods_count; i++) {
+    for (int i = 0; i < r->plates_count; i++) {
         strncpy(m->foods[i], r->recettes[i].name, NAME_MAX);        
     }
-    m->foods_count = r->foods_count;
+    m->foods_count = r->plates_count;
         
     sem_post(hubert_mutex);
     
@@ -179,12 +182,19 @@ static int connect()
     return status.status;
 }
 
+int time_max_command(struct msg_command *cmd, struct rest *r) {
+	int time = 0;
+	for (int i = 0; i < cmd->foods_count; cmd->foods_count++) {
+		while (strcmp(cmd->)
+	
+	
+}
 
 int main(int argc, char **argv)
 {
     signal(SIGINT, on_close);
     
-    shmemid = shmget(getpid() + 1, sizeof(struct rest), IPC_CREAT | IPC_EXCL | 0666);
+    shmemid = shmget(HUBERT_KEY, sizeof(struct rest), IPC_CREAT | IPC_EXCL | 0666);
     if (shmemid < 0) {
         rest_panic("Can't open shmemid");
         return -1;
@@ -204,11 +214,28 @@ int main(int argc, char **argv)
         rest_panic("Can't open hubert_mutex");
     }
     
-    if (!read_config("config.txt", shmemid)) {
+    struct rest *r = shmat(shmemid, 0, 0);
+    struct cuisine_stock s;
+    
+    if (!read_config("config.txt", r, &s)) {
         rest_panic("Can't read config");
         return -1;
     }
-    
+    shmdt(r);
+    //(unsigned long)time(NULL)
+    if (fork() == 0) {
+		cichen_process(s);
+	}
+	else {
+		while(1) {
+		struct msg_command command;
+		msgrcv(HUBERT_DEST, &command, MSG_COMMAND_SIZE, getpid(), 0);
+		struct rest *r = shmat(shmemid, 0, 0);
+		int time = time_max_command(&command, r);
+		
+		}
+	}	
+
     if (!update_hubert_mem()) {
         rest_panic("Can't initialy update the menu");        
     }
@@ -222,6 +249,9 @@ int main(int argc, char **argv)
     if (status != STATUS_OK) {
         rest_panic("Can't connect to hubert. Status : %d", status);
     }
+    
+    
+    
     
     on_close(0);
     return 0;

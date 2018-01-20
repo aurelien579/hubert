@@ -65,5 +65,7 @@ struct msg_command {
     char quantity[FOODS_MAX];
     int foods_count;
 };
+#define MSG_COMMAND_SIZE   (sizeof(msg_command) - sizeof(long))
+
 
 #endif
