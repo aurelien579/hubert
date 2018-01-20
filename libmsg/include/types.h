@@ -17,6 +17,7 @@ struct menu {
 
 struct command {
     char name[NAME_MAX];
+    int user_pid;
     char foods[FOODS_MAX][NAME_MAX];
     char quantities[FOODS_MAX];
     int count;

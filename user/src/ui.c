@@ -28,8 +28,7 @@ struct line {
 struct command_status {
     char name[NAME_MAX];
     int status;
-    int total_time;
-    int remaining_time;
+    int time;
 };
 
 struct ui {
@@ -39,6 +38,7 @@ struct ui {
     
     struct command_status commands[MAX_COMMANDS];
     int commands_count;
+    int waiting_for_commands;
     
     int cur_line;
     int running;
@@ -300,13 +300,46 @@ static void cli_close(struct ui *self)
         
     self->running = 0;}
 
+static void show_dialog(const char *msg)
+{
+    WINDOW *dlg;
+    int startx = (getmaxx(stdscr) - getmaxx(stdscr)/4) / 2;
+    int starty = 5;
+    
+    dlg = newwin(3, getmaxx(stdscr) / 4, starty, startx);
+    box(dlg, 0, 0);
+    wmove(dlg, 1, 2);
+    wprintw(dlg, msg);
+    refresh();
+    wrefresh(dlg);
+    refresh();
+    
+    getch();
+    
+    delwin(dlg);
+    refresh();
+}
+
 static void cli_command(struct ui *self)
 {
-    struct command commands[RESTS_MAX];
+    struct command commands[MAX_COMMANDS];
     
     if (self->on_command) {
         int count = create_command(self, commands);
-        self->on_command(commands, count);        
+        if (count >= MAX_COMMANDS) {
+            show_dialog("Erreur : Trop de commandes");
+        } else {
+            self->waiting_for_commands = 1;
+            
+            self->commands_count = count;
+            for (int i = 0; i < count; i++) {
+                strncpy(self->commands[i].name, commands[i].name, NAME_MAX);
+                self->commands[i].time = 0;
+                self->commands[i].status = -1;
+            }
+            
+            self->on_command(commands, count);
+        }
     }}
 
 static void cli_refresh(struct ui *self)
@@ -387,6 +420,7 @@ struct ui *ui_new()
     self->on_refresh = NULL;
     
     self->commands_count = 0;
+    self->waiting_for_commands = 0;
     
     return self;}
 
@@ -442,5 +476,13 @@ void ui_set_state(struct ui *self, enum user_state state)
 
 void ui_set_command_status(struct ui *self, char *name, int status, int time)
 {
+    for (int i = 0; i < self->commands_count; i++) {
+        if (!strncmp(self->commands[i].name, name, NAME_MAX)) {
+            self->commands[i].status = status;
+            self->commands[i].time = time;
+        }
+    }
     
+    cli_refresh(self);
 }
+

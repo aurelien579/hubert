@@ -32,3 +32,109 @@
 20:47:27 - USER   : [INFO ] 
 
 20:47:29 - USER   : [INFO ] Closing User
+21:36:32 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+21:36:32 - USER   : [INFO ] Connecting...
+21:36:32 - USER   : [ERROR] Can't connect to Hubert : No such file or directory
+21:36:32 - USER   : [ERROR] Can't communicate with Hubert : Invalid argument
+21:36:34 - USER   : [INFO ] Command
+21:36:35 - USER   : [INFO ] Closing User
+21:36:38 - USER   : [INFO ] Closing User
+21:36:52 - USER   : [INFO ] Connecting...
+21:36:52 - USER   : [INFO ] Connected
+21:37:05 - USER   : [INFO ] Restaurant name : Oizza2!
+
+21:37:05 - USER   : [INFO ] aliments disponibles :
+
+21:37:05 - USER   : [INFO ] pizza     
+21:37:05 - USER   : [INFO ] chips     
+21:37:05 - USER   : [INFO ] 
+
+21:37:12 - USER   : [INFO ] Command
+		Command in : Oizza2!
+			Food : pizza 2
+21:37:15 - USER   : [ERROR] Can't recv command status : Identifier removed
+21:37:15 - USER   : [ERROR] Can't recv command status : Invalid argument
+21:37:33 - USER   : [INFO ] Closing User
+21:37:33 - USER   : [ERROR] Can't open perm queue : No such file or directory
+21:37:35 - USER   : [INFO ] Closing User
+21:37:46 - USER   : [INFO ] Connecting...
+21:37:46 - USER   : [INFO ] Connected
+21:37:46 - USER   : [INFO ] Restaurant name : Pizza2!
+
+21:37:46 - USER   : [INFO ] aliments disponibles :
+
+21:37:46 - USER   : [INFO ] pizza     
+21:37:46 - USER   : [INFO ] chips     
+21:37:46 - USER   : [INFO ] 
+
+21:37:50 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 1
+21:37:53 - USER   : [ERROR] Can't recv command status : Identifier removed
+21:37:53 - USER   : [ERROR] Can't recv command status : Invalid argument
+21:37:55 - USER   : [INFO ] Closing User
+21:37:55 - USER   : [ERROR] Can't open perm queue : No such file or directory
+21:37:56 - USER   : [INFO ] Closing User
+21:38:05 - USER   : [INFO ] Connecting...
+21:38:05 - USER   : [INFO ] Connected
+21:38:05 - USER   : [INFO ] Restaurant name : Pizza2!
+
+21:38:05 - USER   : [INFO ] aliments disponibles :
+
+21:38:05 - USER   : [INFO ] pizza     
+21:38:05 - USER   : [INFO ] chips     
+21:38:05 - USER   : [INFO ] 
+
+21:38:14 - USER   : [INFO ] Closing User
+21:38:32 - USER   : [INFO ] Connecting...
+21:38:32 - USER   : [INFO ] Connected
+21:38:38 - USER   : [INFO ] Closing User
+21:38:38 - USER   : [ERROR] Can't open perm queue : No such file or directory
+21:38:39 - USER   : [INFO ] Closing User
+21:39:45 - USER   : [INFO ] Closing User
+21:40:05 - USER   : [INFO ] Closing User
+21:40:39 - USER   : [INFO ] Closing User
+21:40:40 - USER   : [INFO ] Closing User
+21:40:47 - USER   : [INFO ] Closing User
+21:40:48 - USER   : [INFO ] Closing User
+21:41:13 - USER   : [INFO ] Closing User
+21:41:15 - USER   : [INFO ] Closing User
+21:41:55 - USER   : [INFO ] Closing User
+21:41:56 - USER   : [INFO ] Closing User
+21:42:21 - USER   : [INFO ] Closing User
+21:42:23 - USER   : [INFO ] Closing User
+21:42:35 - USER   : [INFO ] Closing User
+21:42:36 - USER   : [INFO ] Closing User
+21:42:46 - USER   : [INFO ] Closing User
+21:42:47 - USER   : [INFO ] Closing User
+21:43:02 - USER   : [INFO ] Closing User
+21:43:03 - USER   : [INFO ] Closing User
+21:43:33 - USER   : [INFO ] Closing User
+21:43:34 - USER   : [INFO ] Closing User
+21:43:43 - USER   : [INFO ] Closing User
+21:43:44 - USER   : [INFO ] Closing User
+21:44:12 - USER   : [INFO ] Closing User
+21:44:18 - USER   : [INFO ] Closing User
+21:44:23 - USER   : [INFO ] Closing User
+21:44:35 - USER   : [INFO ] Closing User
+21:44:42 - USER   : [INFO ] Command
+21:44:43 - USER   : [INFO ] Closing User
+21:54:30 - USER   : [INFO ] Closing User
+21:54:31 - USER   : [INFO ] Closing User
+21:57:57 - USER   : [INFO ] Connecting...
+21:57:57 - USER   : [INFO ] Connected
+21:57:58 - USER   : [INFO ] Restaurant name : Pizza2!
+
+21:57:58 - USER   : [INFO ] aliments disponibles :
+
+21:57:58 - USER   : [INFO ] pizza     
+21:57:58 - USER   : [INFO ] chips     
+21:57:58 - USER   : [INFO ] 
+
+21:58:00 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+21:58:04 - USER   : [ERROR] Can't recv command status : Identifier removed
+21:58:04 - USER   : [ERROR] Can't recv command status : Invalid argument
+21:58:06 - USER   : [INFO ] Closing User
+21:58:06 - USER   : [ERROR] Can't open perm queue : No such file or directory
