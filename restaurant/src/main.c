@@ -13,6 +13,7 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <error.h>
 
 struct rest {
     char    name[NAME_MAX];
@@ -26,6 +27,10 @@ static int shmemid = -1;
 static int shmemid_hubert = -1;
 static int q = -1;
 
+static void on_close(int n);
+
+LOG_FUNCTIONS(rest)
+PANIC_FUNCTION(rest, on_close)
 
 static void disconnect()
 {    
@@ -34,8 +39,8 @@ static void disconnect()
 }
 
 static void on_close(int n)
-{    
-    printf("\nClosing Restaurant\n");
+{
+    log_rest("Closing Restaurant");
 
     if (shmemid > 0) {
         shmctl(shmemid, IPC_RMID, 0);
@@ -57,17 +62,6 @@ static void on_close(int n)
     }
 
     exit(0);
-}
-
-static void rest_panic(const char *str, ...)
-{
-    va_list args;
-    va_start(args, str);
-    va_start(args, str);
-    fprintf(stderr, "REST : [PANIC] ");
-    vfprintf(stderr, str, args);
-    printf("\n");
-    on_close(0);
 }
 
 void print_rest(struct rest *r)
@@ -94,7 +88,7 @@ int read_config(const char *filename, int shmemid)
 
     r->name[strlen(r->name) - 1] = '\0';
 
-    printf("Restaurant name : %s\n", r->name);
+    log_rest("Restaurant name : %s", r->name);
 
     char buffer[512];
 
@@ -105,8 +99,8 @@ int read_config(const char *filename, int shmemid)
         r->foods_count++;
     }
 
-    printf("config read\n");
-    print_rest(r);
+    log_rest("Config read");
+    //print_rest(r);
 
     shmdt(r);
 

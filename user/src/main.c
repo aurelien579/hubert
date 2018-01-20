@@ -11,17 +11,18 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <error.h>
 
 static int perm_queue = -1;
 static int connected = 0;
 
-void user_log(const char *str, ...);
 static int disconnect(int q);
+
+LOG_FUNCTIONS(user)
 
 static void client_close(int n)
 {
-    printf("\n");
-    user_log("Closing User");
+    log_user("Closing User");
     
     if (connected) {
         disconnect(perm_queue);
@@ -30,25 +31,7 @@ static void client_close(int n)
     exit(0);
 }
 
-void user_log(const char *str, ...)
-{
-    va_list args;
-    va_start(args, str);
-    printf("USER : [INFO] ");
-    vprintf(str, args);
-    printf("\n");
-    va_end(args);
-}
-
-void user_panic(const char *str, ...)
-{
-    va_list args;
-    va_start(args, str);
-    fprintf(stderr, "USER : [PANIC] ");
-    vfprintf(stderr, str, args);
-    printf("\n");
-    client_close(0);
-}
+PANIC_FUNCTION(user, client_close)
 
 static int connect(int q)
 {
@@ -97,14 +80,14 @@ static int get_menus(int q, struct menu m[], int *count)
 static void print_menus(struct menu m[], int n)
 {
     for (int i=0; i < n; i++ ) {
-        printf("Restaurant name : %s\n\n", m[i].name);
+        log_user("Restaurant name : %s\n", m[i].name);
         
-        printf("aliments disponibles :\n");
+        log_user("aliments disponibles :\n");
         for (int j=0; j < (m[i].foods_count); j++) {
-            printf("%s     ", m[i].foods[j]);
+            log_user("%s     ", m[i].foods[j]);
         }
         
-        printf("\n");
+        log_user("\n");
     }
 }
 
@@ -114,22 +97,22 @@ int main(int argc, char **argv)
     
     perm_queue = msgget(HUBERT_KEY, 0);
     if (perm_queue < 0) {
-        user_panic("Can't connect to Hubert.");
+        user_panic("Can't connect to Hubert");
     }
     
     int status = connect(perm_queue);
     if (status < 0) {
-        user_panic("Can't communicate with Hubert.");
+        user_panic("Can't communicate with Hubert");
     } else if (status != STATUS_OK) {
         user_panic("Can't connect to hubert. Status : %d", status);
     }
     
     connected = 1;
     
-    user_log("Connected");
+    log_user("Connected");
     
     int q = msgget(getpid(), 0);
-    if (q < 0) {        user_panic("Can't open dedicated queue.");
+    if (q < 0) {        user_panic("Can't open dedicated queue");
     }
     
     int count = 0;
