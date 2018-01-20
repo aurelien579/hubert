@@ -47,8 +47,10 @@ struct msg_status {
     int status;
 };
 
-#define COMMAND_SENT    1
-#define COMMAND_ARRIVED 2
+#define COMMAND_START   1
+#define COMMAND_COOKED  2
+#define COMMAND_SENT    3
+#define COMMAND_ARRIVED 4
 #define MSG_STATUS_COMMAND_SIZE (sizeof(struct msg_command_status) - sizeof(long))
 struct msg_command_status {
     long dest;
@@ -75,12 +77,11 @@ struct msg_request {
 };
 #define MSG_REQUEST_SIZE    (sizeof(long))
 
-#define MSG_COMMAND_SIZE    (sizeof(struct msg_command) - sizeof(long))
 struct msg_command {
     long dest;
     struct command command;
 };
-#define MSG_COMMAND_SIZE   (sizeof(msg_command) - sizeof(long))
+#define MSG_COMMAND_SIZE   (sizeof(struct msg_command) - sizeof(long))
 
 
 #endif

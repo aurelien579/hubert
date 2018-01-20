@@ -18,6 +18,7 @@
 #include <error.h>
 
 struct rest {
+    char    name[NAME_MAX];
     int     key;
     sem_t  *mutex;
 };
@@ -79,7 +80,18 @@ PANIC_FUNCTION(hubert, main_close)
 
 static int get_rest_pid(char *name)
 {
+    struct hubert_mem *mem = shmat(hubert_mem_key, 0, 0);
+    if (mem == (void *) -1) {
+        return -1;
+    }
     
+    for (int i = 0; i < mem->rests_count; i++) {
+        if (strncmp(mem->rests[i].name, name, NAME_MAX) == 0) {
+            return mem->rests[i].key;
+        }
+    }
+    
+    return 0;
 }
 
 int connect_rest(int key)
@@ -195,17 +207,45 @@ static int send_menu(int q, int dest)
 
 static int user_recv_command(int q, struct command *cmd)
 {
+    log_hubert("user_recv_command");
     struct msg_command msg;
     if (msgrcv(q, &msg, MSG_COMMAND_SIZE, HUBERT_DEST, 0) < 0) {
-        return -1;
+        return 0;
     }
     
     *cmd = msg.command;
+    return 1;
 }
 
-static int send_command_to_rest(struct command *cmd)
+static int send_command_to_rest(int pid, struct command *cmd)
 {
-    struct msg_command msg = {  };
+    log_hubert("send_command_to_rest");
+    struct msg_command msg = { pid, *cmd };
+    if (msgsnd(perm_queue, &msg, MSG_COMMAND_SIZE, 0) < 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+static int recv_command_status_from_rest(int user_id, struct msg_command_status *msg)
+{
+    log_hubert("recv_command_status_from_rest");
+    if (msgrcv(perm_queue, msg, MSG_STATUS_COMMAND_SIZE, user_id, 0) < 0) {
+        return 0;
+    } else {
+        return 1;
+    }    
+}
+
+static int send_command_status_to_user(int queue, struct msg_command_status *msg)
+{
+    log_hubert("send_command_status_to_user");
+    if (msgsnd(queue, msg, MSG_STATUS_COMMAND_SIZE, 0) < 0) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
 /* TODO: Correct memory leak (make a user_close function that close the mutex */
@@ -235,10 +275,45 @@ static void user(int key)
             log_user("COMMAND_REQUEST");
             struct command cmd;
             if (!user_recv_command(user_q, &cmd)) {
-                log_user_errro("user_recv_command error");
+                log_user_error("user_recv_command error");
+                break;
+            }
+            
+            int rest_pid = get_rest_pid(cmd.name);
+            if (rest_pid == 0) {
+                log_user_error("Can't find rest %s", cmd.name);
+                break;
+            } else if (rest_pid < 0) {
+                log_user_error("Error while getting rest pid");
+                break;
+            }
+            
+            if (!send_command_to_rest(rest_pid, &cmd)) {
+                log_user_error("send_command_to_rest");
+                break;
             }
             
             
+            /* COMMAND_START STATUS */
+            struct msg_command_status msg_status;
+            if (!recv_command_status_from_rest(cmd.user_pid, &msg_status)) {
+                log_user_error("recv_command_status_from_rest");
+                break;
+            }
+            
+            msg_status.dest = cmd.user_pid;
+            if (!send_command_status_to_user(user_q, &msg_status)) {
+                log_user_error("send_command_status_to_user");
+                break;
+            }
+            
+            /* COMMAND_COOKED STATUS */
+            if (!recv_command_status_from_rest(cmd.user_pid, &msg_status)) {
+                log_user_error("recv_command_status_from_rest");
+                break;
+            }
+            
+            /* TODO: Send COMMAND_SENT to user, start delivery, send COMMAND_ARRIVED */
             
             break;
         }    }}
