@@ -1,15 +1,18 @@
 #include <types.h>
 #include <msg.h>
 
-#include <ncurses.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <sys/types.h>
+#include <stdlib.h>
 #include <sys/ipc.h>
+#include <sys/shm.h>
 #include <sys/msg.h>
-#include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <semaphore.h>
+#include <unistd.h>
+#include <pthread.h>
 #include <stdarg.h>
 
 #include "ui.h"
@@ -17,42 +20,84 @@
 #define LOG_OUT         OUT_FILE
 #include <error.h>
 
-static int perm_queue = -1;
+struct menu menus[RESTS_MAX];
+int menus_count = 0;
+sem_t *mutex = NULL;
+int command_progress = 0;
+
+static int user_queue = -1;
 static int connected = 0;
+static struct ui *ui;
+static pthread_t thread;
 
 static void client_close(int n);
 
 LOG_FUNCTIONS(user)
 PANIC_FUNCTION(user, client_close)
 
-static struct menu menus[RESTS_MAX];
-static int menus_count = 0;
-static struct ui *ui;
-
-
-static int connect(int q)
+static int send_connect(int queue)
 {
     int key = getpid();
     
     struct msg_state msg = { HUBERT_DEST, USER_CONNECT, key };
-    if (msgsnd(q, &msg, MSG_STATE_SIZE, 0) < 0) {
+    if (msgsnd(queue, &msg, MSG_STATE_SIZE, 0) < 0) {
         return -1;
     }
     
     struct msg_status status;
-    if (msgrcv(q, &status, MSG_STATUS_SIZE, key, 0) < 0) {
+    if (msgrcv(queue, &status, MSG_STATUS_SIZE, key, 0) < 0) {
         return -1;
     }
     
     return status.status;
 }
 
-static int disconnect(int q)
+static int connect()
 {    
-    struct msg_state msg = { HUBERT_DEST, USER_DISCONNECT, getpid() };
-    if (msgsnd(q, &msg, MSG_STATE_SIZE, 0) < 0) {
+    log_user("Connecting...");
+    int perm_queue = msgget(HUBERT_KEY, 0);
+    if (perm_queue < 0) {
+        log_user_error("Can't connect to Hubert");
+    }
+    
+    int status = send_connect(perm_queue);
+    if (status < 0) {
+        log_user_error("Can't communicate with Hubert");
+        return 0;
+    } else if (status != STATUS_OK) {
+        log_user_error("Can't connect to hubert. Status : %d", status);
         return 0;
     }
+    
+    user_queue = msgget(getpid(), 0);
+    if (user_queue < 0) {
+        return 0;
+        log_user_error("Can't open dedicated queue");
+    }
+    
+    connected = 1;
+    
+    log_user("Connected");
+    
+    return 1;
+}
+
+static int disconnect()
+{
+    int perm_queue = msgget(HUBERT_KEY, 0);
+    if (perm_queue < 0) {
+        log_user_error("Can't open perm queue");
+    }
+    
+    struct msg_state msg = { HUBERT_DEST, USER_DISCONNECT, getpid() };
+    if (msgsnd(perm_queue, &msg, MSG_STATE_SIZE, 0) < 0) {
+        user_queue = -1;
+        connected = 0;
+        return 0;
+    }
+    
+    connected = 0;
+    user_queue = -1;
     return 1;
 }
 
@@ -61,21 +106,34 @@ static void client_close(int n)
     log_user("Closing User");
     
     if (connected) {
-        disconnect(perm_queue);
+        disconnect();
+    }
+    
+    if (ui) {
+        ui_stop(ui);
+        
+        pthread_join(thread, NULL);
+    }
+    
+    if (mutex) {
+        sem_destroy(mutex);
+        char sem_name[NAME_MAX];
+        sprintf(sem_name, "%d", getpid());
+        sem_unlink(sem_name);
     }
     
     exit(0);
 }
 
-static int get_menus(int q, struct menu m[], int *count)
+static int get_menus(struct menu m[], int *count)
 {
     struct msg_request request = { HUBERT_DEST, MENU_REQUEST };
-    if (msgsnd(q, &request, MSG_REQUEST_SIZE, 0) < 0) {
+    if (msgsnd(user_queue, &request, MSG_REQUEST_SIZE, 0) < 0) {
         return 0;
     }
     
     struct msg_menus menus;
-    if (msgrcv(q, &menus, MSG_MENUS_SIZE, getpid(), 0) < 0) {
+    if (msgrcv(user_queue, &menus, MSG_MENUS_SIZE, getpid(), 0) < 0) {
         return 0;
     }
         
@@ -87,7 +145,7 @@ static int get_menus(int q, struct menu m[], int *count)
 
 static void print_menus(struct menu m[], int n)
 {
-    for (int i=0; i < n; i++ ) {
+    for (int i = 0; i < n; i++ ) {
         log_user("Restaurant name : %s\n", m[i].name);
         
         log_user("aliments disponibles :\n");
@@ -99,6 +157,49 @@ static void print_menus(struct menu m[], int n)
     }
 }
 
+static int send_command(struct command *c)
+{
+    struct msg_request request = { HUBERT_DEST, COMMAND_REQUEST };
+    if (msgsnd(user_queue, &request, MSG_REQUEST_SIZE, 0) < 0) {
+        log_user_error("Can't send request to hubert");
+        return 0;
+    }
+    
+    struct msg_command msg = { HUBERT_DEST, *c };    
+    if (msgsnd(user_queue, &msg, MSG_COMMAND_SIZE, 0) < 0) {
+        log_user_error("Can't send command to huber");
+        return 0;
+    }
+    
+    return 1;
+}
+
+static void on_connect()
+{
+    if (connected) {
+        disconnect();
+    }
+    
+    if (!connect()) {
+        ui_set_state(ui, DISCONNECTED);
+    } else {
+        ui_set_state(ui, CONNECTED);
+    }
+}
+
+static int recv_command_status(char *rest, int *status, int *time)
+{
+    struct msg_command_status msg;
+    if (msgrcv(user_queue, &msg, MSG_STATUS_COMMAND_SIZE, getpid(), 0) < 0) {
+        log_user_error("Can't recv command status");
+        return 0;
+    }
+    
+    strncm(rest, msg.rest_name, NAME_MAX);
+    *status = msg.status;
+    *time = msg.time;
+}
+
 static void on_command(struct command *c, int count)
 {
     log_user("Command");
@@ -107,67 +208,82 @@ static void on_command(struct command *c, int count)
         for (int j = 0; j < c[i].count; j++) {
             fprintf(log_file, "\t\t\tFood : %s %d\n", c[i].foods[j], c[i].quantities[j]);
         }
+    }
+    
+    command_progress = 0;
+    for (int i = 0; i < count; i++) {
+        if (send_command(&c[i]) < 0) {
+            ui_set_state(ui, DISCONNECTED);
+        }
+    }
+    
+    char name[NAME_MAX];
+    int status;
+    int time;
+    for (int i = 0; i < count * 2; i++) {
+        if (recv_command_status(name, &status, &time)) {
+            
+        }
     }}
+
+static void on_refresh()
+{    
+    if (!get_menus(menus, &menus_count)) {
+        ui_set_state(ui, DISCONNECTED);
+        log_user_error("Can't get menus from hubert");
+    }
+    
+    print_menus(menus, menus_count);
+    
+    ui_update_menus(ui);
+}
+
+static void on_close()
+{
+    client_close(0);
+}
+
+static void *ui_thread(void *data)
+{
+    ui = ui_new();
+    ui_set_state(ui, DISCONNECTED);
+    ui_set_on_command(ui, on_command);
+    ui_set_on_refresh(ui, on_refresh);
+    ui_set_on_connect(ui, on_connect);
+    ui_set_on_close(ui, on_close);
+    ui_start(ui);
+
+    ui_free(ui);
+}
 
 int main(int argc, char **argv)
 {
     log_file = fopen("user.log", "a");
-    
-    menus_count++;
-    strcpy(menus[0].name, "Name test");
-    menus[0].foods_count = 3;
-    strcpy(menus[0].foods[0], "Pizza !");
-    strcpy(menus[0].foods[1], "Carrotes !");
-    strcpy(menus[0].foods[2], "Langoustes !");
-    
-    menus_count++;
-    strcpy(menus[1].name, "OTacos");
-    menus[1].foods_count = 3;
-    strcpy(menus[1].foods[0], "Pizza !");
-    strcpy(menus[1].foods[1], "Tacos !");
-    strcpy(menus[1].foods[2], "Kebab !");
-    
-    ui = ui_new();
-    ui_update_menus(ui, menus, menus_count);
-    ui_set_on_command(ui, on_command);
-    ui_start(ui);
-    ui_free(ui);
-    return 0;
-    
+
     if (log_file == NULL) {
         fprintf(stderr, "[FATAL] Can't open log file\n");
         return -1;
     }
     
     signal(SIGINT, client_close);
-    
-    perm_queue = msgget(HUBERT_KEY, 0);
-    if (perm_queue < 0) {
-        user_panic("Can't connect to Hubert");
+       
+    char sem_name[NAME_MAX];
+    sprintf(sem_name, "%d", getpid());
+    mutex = sem_open(sem_name, O_CREAT | O_EXCL, 0666, 1);
+    if (mutex == SEM_FAILED) {
+        user_panic("Can't open sempahore");        
     }
     
-    int status = connect(perm_queue);
-    if (status < 0) {
-        user_panic("Can't communicate with Hubert");
-    } else if (status != STATUS_OK) {
-        user_panic("Can't connect to hubert. Status : %d", status);
+    if (pthread_create(&thread, NULL, ui_thread, NULL) < 0) {
+        user_panic("Can't create ui thread");
+    }    
+    
+    
+    while (1) {
+        
     }
     
-    connected = 1;
-    
-    log_user("Connected");
-    
-    int q = msgget(getpid(), 0);
-    if (q < 0) {        user_panic("Can't open dedicated queue");
-    }
-    
-    int count = 0;
-    struct menu m[RESTS_MAX];
-    if (!get_menus(q, m, &count)) {
-        user_panic("Can't get menu");
-    }
-    
-    print_menus(m, count);
-    client_close(0);    
+    client_close(0);
+
     return 0;
 }

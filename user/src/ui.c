@@ -4,7 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_LINES   100
+#define MAX_LINES       100
+#define MAX_COMMANDS    5
 
 
 
@@ -24,18 +25,29 @@ struct line {
     int             quantity;
 };
 
+struct command_status {
+    char name[NAME_MAX];
+    int status;
+    int total_time;
+    int remaining_time;
+};
+
 struct ui {
+    enum user_state state;
     struct line lines[MAX_LINES];
     int lines_count;
+    
+    struct command_status commands[MAX_COMMANDS];
+    int commands_count;
+    
     int cur_line;
-    const struct menu *menus;
-    int menus_count;
     int running;
     WINDOW *win;
     
     on_refresh_t on_refresh;
     on_close_t on_close;
     on_command_t on_command;
+    on_connect_t on_connect;
 };
 
 
@@ -56,6 +68,11 @@ static WINDOW *cli_init()
     WINDOW *win;
     
     initscr();
+    start_color();
+    init_pair(1, COLOR_WHITE, COLOR_BLACK);
+    init_pair(2, COLOR_RED, COLOR_BLACK);
+    init_pair(3, COLOR_GREEN, COLOR_BLACK);
+    
     cbreak();
     curs_set(0);
     keypad(stdscr, TRUE);
@@ -185,6 +202,8 @@ static void line_print(WINDOW *win, struct line l)
 
 static void cli_update_lines(struct ui *self)
 {
+    sem_wait(mutex);
+    
     for (int i = 0; i < self->lines_count; i++) {
         line_free(self->lines[i]);
     }
@@ -192,18 +211,20 @@ static void cli_update_lines(struct ui *self)
     self->lines_count = 0;
     self->cur_line = 2;
     
-    for (int i = 0; i < self->menus_count; i++) {
-        if (i + self->menus[i].foods_count + 2 < MAX_LINES) {
+    for (int i = 0; i < menus_count; i++) {
+        if (i + menus[i].foods_count + 2 < MAX_LINES) {
             add_line(self, LINE_VLINE, NULL);
-            add_line(self, LINE_REST_NAME, self->menus[i].name);
+            add_line(self, LINE_REST_NAME, menus[i].name);
             
-            for (int j = 0; j < self->menus[i].foods_count; j++) {
-                add_line(self, LINE_FOOD_NAME, self->menus[i].foods[j]);
+            for (int j = 0; j < menus[i].foods_count; j++) {
+                add_line(self, LINE_FOOD_NAME, menus[i].foods[j]);
             }
             
             add_line(self, LINE_VLINE, NULL);
         }
     }
+    
+    sem_post(mutex);
 }
 
 static void cli_print_menus(struct ui *self)
@@ -222,7 +243,24 @@ static void cli_print_menus(struct ui *self)
 static void cli_print_bottom_menu(WINDOW *w)
 {
     wmove(w, getmaxy(w) - 1, 0);
-    wprintw(w, "F1: Command, F2: Refresh, F10: Close");}
+    wprintw(w, "F1: Command, F2: Refresh, F3: Connect, F10: Close");}
+
+static void cli_print_state(WINDOW *w, enum user_state s)
+{
+    wprintw(w, "Status : ");
+    switch (s) {
+        case CONNECTED:
+            wattron(w, COLOR_PAIR(3) | A_BOLD);
+            wprintw(w, "CONNECTED\n");
+            wattroff(w, COLOR_PAIR(3) | A_BOLD);
+            break;
+        case DISCONNECTED:
+            wattron(w, COLOR_PAIR(2) | A_BOLD);
+            wprintw(w, "DISCONNECTED\n");
+            wattroff(w, COLOR_PAIR(2) | A_BOLD);
+            break;
+    }
+}
 
 static void cli_down(struct ui *self)
 {
@@ -280,14 +318,23 @@ static void cli_refresh(struct ui *self)
 static void cli_render(struct ui *self)
 {
     clear();
+    wclear(self->win);
     wmove(self->win, 0, 0);
     
+    cli_print_state(self->win, self->state);    
     cli_center(self->win, "=== HUBERT ===", A_BOLD);
     cli_print_menus(self);
     cli_print_bottom_menu(self->win);
     
     refresh();
     wrefresh(self->win);
+}
+
+static void cli_connect(struct ui *self)
+{
+    if (self->on_connect) {
+        self->on_connect();
+    }
 }
 
 static void cli_run(struct ui *self)
@@ -298,8 +345,7 @@ static void cli_run(struct ui *self)
     
     cli_render(self);
     
-    while (self->running) {
-     
+    while (self->running) {     
         c = getch();
         switch (c) {
             case KEY_DOWN: cli_down(self); break;
@@ -309,6 +355,7 @@ static void cli_run(struct ui *self)
             case KEY_F(1): cli_command(self); break;
             case KEY_F(2): cli_refresh(self); break;
             case KEY_F(10): cli_close(self); break;
+            case KEY_F(3): cli_connect(self); break;
         }
         
         cli_render(self);
@@ -332,14 +379,14 @@ struct ui *ui_new()
     self->lines_count = 0;
     self->cur_line = 0;
     
-    self->menus = NULL;
-    self->menus_count = 0;
     self->running = 0;
     self->win = NULL;
     
     self->on_close = NULL;
     self->on_command = NULL;
     self->on_refresh = NULL;
+    
+    self->commands_count = 0;
     
     return self;}
 
@@ -349,15 +396,19 @@ void ui_start(struct ui *self)
     if (self->on_close)
         self->on_close();}
 
+void ui_stop(struct ui *self)
+{
+    self->running = 0;
+    delwin(self->win);
+    endwin();
+}
+
 void ui_free(struct ui *self)
 {
     free(self);}
 
-void ui_update_menus(struct ui *self, const struct menu *menus, int c)
+void ui_update_menus(struct ui *self)
 {
-    self->menus = menus;
-    self->menus_count = c;
-    
     cli_update_lines(self);
     if (self->running)
         cli_render(self);
@@ -375,4 +426,21 @@ void ui_set_on_command(struct ui *self, on_command_t f)
 void ui_set_on_close(struct ui *self, on_close_t f)
 {
     self->on_close = f;
+}
+
+void ui_set_on_connect(struct ui *self, on_connect_t f)
+{
+    self->on_connect = f;
+}
+
+void ui_set_state(struct ui *self, enum user_state state)
+{
+    self->state = state;
+    if (self->running)
+        cli_render(self);
+}
+
+void ui_set_command_status(struct ui *self, char *name, int status, int time)
+{
+    
 }

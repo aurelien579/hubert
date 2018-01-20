@@ -232,10 +232,9 @@ int main(int argc, char **argv)
     if (hubert_mem == (void *) -1) {        hubert_panic("Can't attach shared memory");
     }
     
-    log_user("Starting...");
+    log_hubert("Starting...");
     struct msg_state state;
     while (running) {
-        //log_hubert("Reading...");
         if (msgrcv(perm_queue, &state, MSG_STATE_SIZE, HUBERT_DEST, 0) < 0) {
             log_hubert_error("Can't receive message");
             continue;

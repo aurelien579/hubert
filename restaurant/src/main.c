@@ -18,23 +18,23 @@
 #define ALIMENTS_MAX    5
 
 struct cuisine_stock {
-	char aliments[ALIMENTS_MAX][NAME_MAX];
-	int quantities[ALIMENTS_MAX];
-	int aliments_count;
+    char aliments[ALIMENTS_MAX][NAME_MAX];
+    int quantities[ALIMENTS_MAX];
+    int aliments_count;
 };
 
 struct receipe {
-	char name[NAME_MAX];
-	int  temps_prep;
-	char ingredients[ALIMENTS_MAX][NAME_MAX];
-	int  quantities[ALIMENTS_MAX];
-	int  ingredients_count;
+    char name[NAME_MAX];
+    int  temps_prep;
+    char ingredients[ALIMENTS_MAX][NAME_MAX];
+    int  quantities[ALIMENTS_MAX];
+    int  ingredients_count;
 };
 
 struct rest {
-    char    		name[NAME_MAX];
+    char            name[NAME_MAX];
     struct receipe  recettes[FOODS_MAX];
-    int     		foods_count;
+    int             foods_count;
 
 };
 
@@ -87,10 +87,10 @@ void print_rest(struct rest *r)
         printf("\nPlat : %s           temps de préparation : %d\nAliments necessaires :\n",
                r->recettes[i].name, r->recettes[i].temps_prep);
         for (int j = 0; j < r->recettes[i].ingredients_count; j++) {
-			printf("     %d %s", r->recettes[i].quantities[j],
-								 r->recettes[i].ingredients[j]);
-		}
-		printf("\n");
+            printf("     %d %s", r->recettes[i].quantities[j],
+                                 r->recettes[i].ingredients[j]);
+        }
+        printf("\n");
     }
 }
 
@@ -116,21 +116,21 @@ int read_config(const char *filename, int shmemid)
 
     while (fgets(buffer, 512, file) != NULL) {
         if (buffer[0] == '{') {
-			//printf("checking aliment\n");
-			fgets(buffer, 512, file);
-			while (buffer[0] != '}') {
-				
-				sscanf(buffer, "%s %d", r->recettes[r->foods_count].ingredients[r->recettes[r->foods_count].ingredients_count],
-					   &r->recettes[r->foods_count].quantities[r->recettes[r->foods_count].ingredients_count]);
+            //printf("checking aliment\n");
+            fgets(buffer, 512, file);
+            while (buffer[0] != '}') {
+                
+                sscanf(buffer, "%s %d", r->recettes[r->foods_count].ingredients[r->recettes[r->foods_count].ingredients_count],
+                       &r->recettes[r->foods_count].quantities[r->recettes[r->foods_count].ingredients_count]);
 
-				r->recettes[r->foods_count].ingredients_count++;
-				fgets(buffer, 512, file);
-			}
-			r->foods_count++;
+                r->recettes[r->foods_count].ingredients_count++;
+                fgets(buffer, 512, file);
+            }
+            r->foods_count++;
         }
         else {
-			sscanf(buffer, "%s %d" , r->recettes[r->foods_count].name, &r->recettes[r->foods_count].temps_prep);
-		}
+            sscanf(buffer, "%s %d" , r->recettes[r->foods_count].name, &r->recettes[r->foods_count].temps_prep);
+        }
     }
 
     log_rest("End reading config");
@@ -222,6 +222,8 @@ int main(int argc, char **argv)
     if (status != STATUS_OK) {
         rest_panic("Can't connect to hubert. Status : %d", status);
     }
+    
+    while (1);
     
     on_close(0);
     return 0;
