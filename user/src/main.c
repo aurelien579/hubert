@@ -222,9 +222,8 @@ static void on_command(struct command *c, int count)
     int status;
     int time;
     for (int i = 0; i < count * 3; i++) {
-        if (recv_command_status(name, &status, &time)) {    
-            log_user("Command progress %d", status);
-            //ui_set_command_status(ui, name, status, time);
+        if (recv_command_status(name, &status, &time)) {
+            ui_set_command_status(ui, name, status, time);
         }
     }
     

@@ -263,6 +263,28 @@ static void cli_print_state(WINDOW *w, enum user_state s)
     } 
 }
 
+static void cli_print_commands(struct ui *self)
+{
+    wprintw(self->win, "Commands :\n");
+    for (int i = 0; i < self->commands_count; i++) {
+        wprintw(self->win, "%s : ", self->commands[i].name);
+        switch (self->commands[i].status) {
+            case COMMAND_START:
+                wprintw(self->win, "Received by restaurant\n");
+                break;
+            case COMMAND_SENT:
+                wprintw(self->win, "Delivering...\n");
+                break;
+            case COMMAND_ARRIVED:
+                wprintw(self->win, "Ready !\n");
+                break;
+            case -1:
+                wprintw(self->win, "Processing by hubert\n");
+                break;
+        }
+    }
+}
+
 static void cli_down(struct ui *self)
 {
     do {        
@@ -321,28 +343,6 @@ static void show_dialog(const char *msg)
     refresh();
 }
 
-static void cli_command(struct ui *self)
-{
-    struct command commands[MAX_COMMANDS];
-    
-    if (self->on_command) {
-        int count = create_command(self, commands);
-        if (count >= MAX_COMMANDS) {
-            show_dialog("Erreur : Trop de commandes");
-        } else {
-            self->waiting_for_commands = 1;
-            
-            self->commands_count = count;
-            for (int i = 0; i < count; i++) {
-                strncpy(self->commands[i].name, commands[i].name, NAME_MAX);
-                self->commands[i].time = 0;
-                self->commands[i].status = -1;
-            }
-            
-            self->on_command(commands, count);
-        }
-    }}
-
 static void cli_refresh(struct ui *self)
 {
     if (self->on_refresh) {
@@ -358,10 +358,37 @@ static void cli_render(struct ui *self)
     cli_print_state(self->win, self->state);    
     cli_center(self->win, "=== HUBERT ===", A_BOLD);
     cli_print_menus(self);
+    cli_print_commands(self);
     cli_print_bottom_menu(self->win);
     
     refresh();
     wrefresh(self->win);
+}
+
+static void cli_command(struct ui *self)
+{
+    struct command commands[MAX_COMMANDS];
+    
+    if (self->on_command) {
+        int count = create_command(self, commands);
+        
+        if (count >= MAX_COMMANDS) {
+            show_dialog("Erreur : Trop de commandes");
+        } else {
+            self->waiting_for_commands = 1;
+            
+            self->commands_count = count;
+            for (int i = 0; i < count; i++) {
+                strncpy(self->commands[i].name, commands[i].name, NAME_MAX);
+                self->commands[i].time = 0;
+                self->commands[i].status = -1;
+            }
+            
+            cli_render(self);
+            
+            self->on_command(commands, count);
+        }
+    }
 }
 
 static void cli_connect(struct ui *self)
@@ -484,6 +511,6 @@ void ui_set_command_status(struct ui *self, char *name, int status, int time)
         }
     }
     
-    cli_refresh(self);
+    cli_render(self);
 }
 
