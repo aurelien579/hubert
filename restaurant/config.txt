@@ -1,5 +1,5 @@
 Pizza2!
-pizza 240
+pizza 10
 {
 tomate 1
 formage 2

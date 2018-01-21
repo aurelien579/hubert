@@ -114,24 +114,25 @@ void print_rest(struct rest *r)
     }
 }
 
-void print_stock( struct cuisine_stock s) 
+void print_stock( struct cuisine_stock *s) 
 {
 	printf("Stock : \n\n");
-	for (int i=0; i < s.aliments_count; i++) {
-		printf("%s : %d\n", s.aliments[i], s.quantities[i]);
+	for (int i=0; i < s->aliments_count; i++) {
+		printf("%s : %d\n", s->aliments[i], s->quantities[i]);
 	}
 }
-int ingredient_in_stock(struct cuisine_stock s, char ingredient[NAME_MAX])
+
+int ingredient_in_stock(struct cuisine_stock s, char *ingredient)
 {
 	for (int i = 0; i < s.aliments_count; i++) {
 		if (strcmp(ingredient, s.aliments[i]) == 0) {
-			return 1;
+			return i;
 		}
 	}
-	return 0;
+	return -1;
 }
 
-int read_config(const char *filename, struct rest *r, struct cuisine_stock s)
+int read_config(const char *filename, struct rest *r, struct cuisine_stock *s)
 {
     
     FILE *file = fopen(filename, "r");
@@ -152,20 +153,20 @@ int read_config(const char *filename, struct rest *r, struct cuisine_stock s)
 
     while (fgets(buffer, 512, file) != NULL) {
         if (buffer[0] == '{') {
-            //printf("checking aliment\n");
+
             fgets(buffer, 512, file);
             while (buffer[0] != '}') {
                 int n = r->plates_count;
                 sscanf(buffer, "%s %d", r->recettes[n].ingredients[r->recettes[n].ingredients_count],
                        &r->recettes[n].quantities[r->recettes[n].ingredients_count]);
                 
-                char ingredient[NAME_MAX];
+                char *ingredient=malloc(sizeof(char));
                 strcpy(ingredient, r->recettes[n].ingredients[r->recettes[n].ingredients_count]);
-                if (!ingredient_in_stock(s, ingredient)) {
-                    s.quantities[s.aliments_count] = 5;
-                    strcpy(s.aliments[s.aliments_count++], ingredient);
+                if (ingredient_in_stock(*s, ingredient) < 0) {
+                    s->quantities[s->aliments_count] = 5;
+                    strcpy(s->aliments[s->aliments_count++], ingredient);
                 }
-                
+                free(ingredient);
                 r->recettes[r->plates_count].ingredients_count++;
                 fgets(buffer, 512, file);
             }
@@ -177,8 +178,6 @@ int read_config(const char *filename, struct rest *r, struct cuisine_stock s)
     }
 
     log_rest("End reading config");
-    print_rest(r);
-	print_stock(s);
     return 1;
 }
 
@@ -223,7 +222,6 @@ static int connect()
 int time_command(struct rest *r, struct command cmd)
 {
     int time = 0;
-    log_cook("Command count : %d", cmd.count);
     
     for (int i = 0; i < cmd.count; i++) {
         for (int j = 0; j < r->plates_count; j++) {
@@ -249,55 +247,73 @@ int rand_time(int a, int b)
     return rand()%(b-a) +a;
 }
 
-void collect_ingredients(struct command cmd, struct rest *r, struct cuisine_stock s)
-{	log_cook("dans fonction collecting");
-	log_cook("aliments à check : %d", r->plates_count);
+int number_repeice(char *name, struct rest *r)
+{
+	for (int n=0; n < r->plates_count; n++) {
+		if (strcmp(name, r->recettes[n].name) == 0) {
+		return n;
+		}
+	}
+	return -1;
+}
+
+void add_aliments_to_cmd (struct cuisine_stock *command_tot, struct receipe recette , int commanded)
+{
+	for (int j=0; j < recette.ingredients_count; j++) {
+		int pos = ingredient_in_stock(*command_tot, recette.name);
+		if (pos < 0) {
+			strcpy(command_tot->aliments[command_tot->aliments_count], recette.ingredients[j]);
+			command_tot->quantities[command_tot->aliments_count++] = commanded * recette.quantities[j];
+			//log_cook("ingredient ajouté : %d %s", ali_tot.quantities[ali_tot.aliments_count - 1], ali_tot.aliments[ali_tot.aliments_count - 1]);
+		}
+		else {
+			command_tot->quantities[pos] += commanded * recette.quantities[j];
+			//log_cook("ingredient maj : %d %s", ali_tot.quantities[pos], ali_tot.aliments[pos]);	
+		}
+	}
+}
+
+void buy_aliments_if_needed(int cmd_need, struct cuisine_stock *s, int pos)
+{	
+	while (cmd_need > s->quantities[pos]) {
+		log_cook("need to buy %s", s->aliments[pos]);
+		sleep(rand_time(10, 20));
+		s->quantities[pos] += 50;					
+	}
+}
+
+void pick_aliments(struct cuisine_stock command, struct cuisine_stock *s)
+{
+	for (int n=0; n<command.aliments_count; n++) {
+		for (int i=0; i < s->aliments_count; i++) {
+			if (strcmp(command.aliments[n], s->aliments[i]) == 0) {
+				
+				buy_aliments_if_needed(command.quantities[n], s, i);
+				
+				s->quantities[i] -= command.quantities[n];
+			}
+		}
+	}	
+}
+
+void collect_ingredients(struct command cmd, struct rest *r, struct cuisine_stock *s)
+{	
     struct cuisine_stock ali_tot;
     ali_tot.aliments_count = 0;
-    /* initialisation de ali_tot, liste des aliments necessaires */
-    for (int n=0; n < r->plates_count; n++) {
-		log_cook("check %s\n", cmd.foods[0]);
-		if (strcmp(cmd.foods[0], r->recettes[n].name) == 0) {
-			log_cook("recette trouvée");
-			 log_cook("ingredients à copier : %d", r->recettes[n].ingredients_count);
-			for (int j=0; j < r->recettes[n].ingredients_count; j++) {
-				log_cook("ali_tot.aliments_count : %d", ali_tot.aliments_count);
-				strcpy(ali_tot.aliments[ali_tot.aliments_count], r->recettes[n].ingredients[j]);
-				//log_cook("qtité demandéé : %s %d",cmd.quantities[n], atoi(&cmd.quantities[n]));
-				//ali_tot.quantities[ali_tot.aliments_count++] =  atoi(&cmd.quantities[n]) * (r->recettes[n].quantities[j]);
-				//log_cook("ingredient ajouté : %d %s", ali_tot.quantities[ali_tot.aliments_count - 1], ali_tot.aliments[ali_tot.aliments_count - 1]);
-			}
-		}
-	}
-	log_cook("ali_tot initialesed");
+    
 	/* remplissage de ali_tot */
-	for (int i=1; i<cmd.count; i++) {
-		for (int n=0; n < r->plates_count; n++) {
-			if (strcmp(cmd.foods[i], r->recettes[n].name) == 0) {
-				for (int j=0; j < r->recettes[n].ingredients_count; j++) {
-					strcpy(ali_tot.aliments[ali_tot.aliments_count], r->recettes[n].ingredients[j]);
-					//ali_tot.quantities[ali_tot.aliments_count++] =  atoi(&cmd.quantities[n]) * r->recettes[n].quantities[j];
-				}
-			}
+	for (int i=0; i<cmd.count; i++) {
+		int n = number_repeice(cmd.foods[i], r);
+		if (n < 0) {
+			log_cook_error("can't find receipe");
 		}
+		add_aliments_to_cmd(&ali_tot, r->recettes[n] , cmd.quantities[i]);
+	
 	}
-	printf("aliments à prendre :\n");
-	print_stock(ali_tot);
-    /* réapprovisionnement si necessaire puis preparation de la commande */
-    for (int n=0; n<ali_tot.aliments_count; n++) {
-		for (int i=0; i < s.aliments_count; i++) {
-			if (strcmp(ali_tot.aliments[n], s.aliments[i]) == 0) {
-			 
-				while (ali_tot.quantities[n] > s.quantities[i]) {
-					
-					sleep(rand_time(10, 20));
-					s.quantities[i] += 50;					
-				}
-				
-				s.quantities[i] -= ali_tot.quantities[n];
-			}
-		}
-	}
+
+	print_stock(&ali_tot);
+	
+	pick_aliments(ali_tot, s);
 }
 
 struct command pop_command(struct rest *r)
@@ -307,13 +323,13 @@ struct command pop_command(struct rest *r)
     return cmd;
 }
 
-int cook_aliments(struct rest *r, struct cuisine_stock s)
+int cook_aliments(struct rest *r, struct cuisine_stock *s)
 {
     sem_wait(rest_mutex);
     struct command cmd = pop_command(r);
     sem_post(rest_mutex);
     
-    log_rest("cook_aliments %d %s for %d", cmd.quantities[0], cmd.foods[0], cmd.user_pid);
+    //log_rest("cook_aliments %d %s for %d", cmd.quantities[0], cmd.foods[0], cmd.user_pid);
     int time = time_command(r, cmd);
     log_rest("time to prepare : %d", time);
     if (time == 0) {
@@ -327,12 +343,15 @@ int cook_aliments(struct rest *r, struct cuisine_stock s)
     log_cook("Collecting ingredients");
     collect_ingredients(cmd, r, s);
     log_cook("ingredients collectés");
+    log_cook("New stock :");
+    print_stock(s);
+    log_cook("preparing command");
     sleep(time);
     log_cook("commande prete !");
     return 1;
 }
 
-void kitchen_process(struct cuisine_stock s)
+void kitchen_process(struct cuisine_stock *s)
 {    
     while(1) {
         sleep(3);
@@ -345,7 +364,7 @@ void kitchen_process(struct cuisine_stock s)
                 if (msgsnd(q, &msg, MSG_STATUS_COMMAND_SIZE, 0) < 0) {
                     log_cook_error("While sending COMMAND_COOKED");
                 }
-            }
+            }	log_cook("command sent");
         }
     }
 }
@@ -386,12 +405,14 @@ int main(int argc, char **argv)
     }
     memset(rest_mem, 0, sizeof(struct rest));
     
-    struct cuisine_stock s;
+    struct cuisine_stock *s = malloc(sizeof(struct cuisine_stock));
     
     if (!read_config("config.txt", rest_mem, s)) {
         rest_panic("Can't read config");
         return -1;
     }
+    print_rest(rest_mem);
+	print_stock(s);
     
     if (!update_hubert_mem()) {
         rest_panic("Can't initialy update the menu");        
@@ -423,7 +444,7 @@ int main(int argc, char **argv)
             add_command(command.command, rest_mem);
         }
     }
-    
+    free(s);
     on_close(0);
     return 0;
 }
