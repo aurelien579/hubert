@@ -1,0 +1,300 @@
+11:06:55 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+11:06:56 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+11:06:56 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+11:06:56 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+11:06:58 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+11:06:58 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+11:07:00 - USER   : [INFO ] Connecting...
+11:07:00 - USER   : [INFO ] Connected
+11:07:01 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:07:01 - USER   : [INFO ] aliments disponibles :
+
+11:07:01 - USER   : [INFO ] pizza     
+11:07:01 - USER   : [INFO ] chips     
+11:07:01 - USER   : [INFO ] 
+
+11:07:09 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:07:10 - USER   : [INFO ] Command progress 1
+11:07:45 - USER   : [INFO ] Closing User
+11:33:10 - USER   : [INFO ] Connecting...
+11:33:10 - USER   : [INFO ] Connected
+11:33:12 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:33:12 - USER   : [INFO ] aliments disponibles :
+
+11:33:12 - USER   : [INFO ] pizza     
+11:33:12 - USER   : [INFO ] chips     
+11:33:12 - USER   : [INFO ] 
+
+11:33:16 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:33:19 - USER   : [INFO ] Command progress 1
+11:34:01 - USER   : [INFO ] Closing User
+11:42:12 - USER   : [INFO ] Connecting...
+11:42:12 - USER   : [INFO ] Connected
+11:42:14 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:42:14 - USER   : [INFO ] aliments disponibles :
+
+11:42:14 - USER   : [INFO ] pizza     
+11:42:14 - USER   : [INFO ] chips     
+11:42:14 - USER   : [INFO ] 
+
+11:42:17 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:42:17 - USER   : [INFO ] Command progress 1
+11:43:55 - USER   : [INFO ] Closing User
+11:44:09 - USER   : [INFO ] Connecting...
+11:44:09 - USER   : [INFO ] Connected
+11:44:09 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:44:09 - USER   : [INFO ] aliments disponibles :
+
+11:44:09 - USER   : [INFO ] pizza     
+11:44:09 - USER   : [INFO ] chips     
+11:44:09 - USER   : [INFO ] 
+
+11:44:15 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:44:15 - USER   : [INFO ] Command progress 1
+11:45:14 - USER   : [INFO ] Closing User
+11:45:28 - USER   : [INFO ] Connecting...
+11:45:28 - USER   : [INFO ] Connected
+11:45:29 - USER   : [INFO ] Connecting...
+11:45:29 - USER   : [INFO ] Connected
+11:45:32 - USER   : [INFO ] Connecting...
+11:45:32 - USER   : [INFO ] Connected
+11:45:36 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:45:36 - USER   : [INFO ] aliments disponibles :
+
+11:45:36 - USER   : [INFO ] pizza     
+11:45:36 - USER   : [INFO ] chips     
+11:45:36 - USER   : [INFO ] 
+
+11:45:42 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:45:42 - USER   : [INFO ] Command progress 1
+11:45:52 - USER   : [INFO ] Closing User
+11:46:30 - USER   : [INFO ] Connecting...
+11:46:30 - USER   : [INFO ] Connected
+11:46:31 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:46:31 - USER   : [INFO ] aliments disponibles :
+
+11:46:31 - USER   : [INFO ] pizza     
+11:46:31 - USER   : [INFO ] chips     
+11:46:31 - USER   : [INFO ] 
+
+11:46:35 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:46:35 - USER   : [INFO ] Command progress 1
+11:46:44 - USER   : [INFO ] Closing User
+11:49:05 - USER   : [INFO ] Connecting...
+11:49:05 - USER   : [INFO ] Connected
+11:49:06 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:49:06 - USER   : [INFO ] aliments disponibles :
+
+11:49:06 - USER   : [INFO ] pizza     
+11:49:06 - USER   : [INFO ] chips     
+11:49:06 - USER   : [INFO ] 
+
+11:49:09 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:49:11 - USER   : [INFO ] Command progress 1
+11:51:25 - USER   : [ERROR] Can't recv command status : Identifier removed
+11:51:25 - USER   : [ERROR] Can't recv command status : Invalid argument
+11:51:25 - USER   : [INFO ] Command DONE
+11:51:27 - USER   : [INFO ] Closing User
+11:51:27 - USER   : [ERROR] Can't open perm queue : No such file or directory
+11:51:36 - USER   : [INFO ] Connecting...
+11:51:36 - USER   : [INFO ] Connected
+11:51:36 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:51:36 - USER   : [INFO ] aliments disponibles :
+
+11:51:36 - USER   : [INFO ] pizza     
+11:51:36 - USER   : [INFO ] chips     
+11:51:36 - USER   : [INFO ] 
+
+11:51:40 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:51:41 - USER   : [INFO ] Command progress 1
+11:53:45 - USER   : [INFO ] Closing User
+11:53:57 - USER   : [INFO ] Connecting...
+11:53:57 - USER   : [INFO ] Connected
+11:53:58 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:53:58 - USER   : [INFO ] aliments disponibles :
+
+11:53:58 - USER   : [INFO ] pizza     
+11:53:58 - USER   : [INFO ] chips     
+11:53:58 - USER   : [INFO ] 
+
+11:54:02 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:54:03 - USER   : [INFO ] Command progress 1
+11:55:32 - USER   : [INFO ] Closing User
+11:55:41 - USER   : [INFO ] Connecting...
+11:55:41 - USER   : [INFO ] Connected
+11:55:41 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:55:41 - USER   : [INFO ] aliments disponibles :
+
+11:55:41 - USER   : [INFO ] pizza     
+11:55:41 - USER   : [INFO ] chips     
+11:55:41 - USER   : [INFO ] 
+
+11:55:48 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:55:51 - USER   : [INFO ] Command progress 1
+11:59:13 - USER   : [INFO ] Closing User
+11:59:53 - USER   : [INFO ] Connecting...
+11:59:53 - USER   : [INFO ] Connected
+11:59:53 - USER   : [INFO ] Restaurant name : Pizza2!
+
+11:59:53 - USER   : [INFO ] aliments disponibles :
+
+11:59:53 - USER   : [INFO ] pizza     
+11:59:53 - USER   : [INFO ] chips     
+11:59:53 - USER   : [INFO ] 
+
+11:59:56 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+11:59:58 - USER   : [INFO ] Command progress 1
+12:00:11 - USER   : [INFO ] Closing User
+12:02:05 - USER   : [INFO ] Connecting...
+12:02:05 - USER   : [INFO ] Connected
+12:02:05 - USER   : [INFO ] Restaurant name : Pizza2!
+
+12:02:05 - USER   : [INFO ] aliments disponibles :
+
+12:02:05 - USER   : [INFO ] pizza     
+12:02:05 - USER   : [INFO ] chips     
+12:02:05 - USER   : [INFO ] 
+
+12:02:08 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+12:02:10 - USER   : [INFO ] Command progress 1
+12:03:54 - USER   : [INFO ] Closing User
+12:03:57 - USER   : [INFO ] Connecting...
+12:03:57 - USER   : [INFO ] Connected
+12:03:58 - USER   : [INFO ] Restaurant name : Pizza2!
+
+12:03:58 - USER   : [INFO ] aliments disponibles :
+
+12:03:58 - USER   : [INFO ] pizza     
+12:03:58 - USER   : [INFO ] chips     
+12:03:58 - USER   : [INFO ] 
+
+12:03:59 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+12:04:02 - USER   : [INFO ] Command progress 1
+12:04:04 - USER   : [INFO ] Command progress 3
+12:04:06 - USER   : [INFO ] Command progress 4
+12:04:06 - USER   : [INFO ] Command DONE
+12:06:03 - USER   : [INFO ] Closing User
+12:06:12 - USER   : [INFO ] Connecting...
+12:06:12 - USER   : [INFO ] Connected
+12:06:12 - USER   : [INFO ] Restaurant name : Pizza2!
+
+12:06:12 - USER   : [INFO ] aliments disponibles :
+
+12:06:12 - USER   : [INFO ] pizza     
+12:06:12 - USER   : [INFO ] chips     
+12:06:12 - USER   : [INFO ] 
+
+12:06:15 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+12:06:17 - USER   : [INFO ] Command progress 1
+12:06:19 - USER   : [INFO ] Command progress 3
+12:06:21 - USER   : [INFO ] Command progress 4
+12:06:21 - USER   : [INFO ] Command DONE
+12:07:23 - USER   : [INFO ] Closing User
+12:07:57 - USER   : [INFO ] Connecting...
+12:07:57 - USER   : [INFO ] Connected
+12:07:57 - USER   : [INFO ] Restaurant name : Pizza2!
+
+12:07:57 - USER   : [INFO ] aliments disponibles :
+
+12:07:57 - USER   : [INFO ] pizza     
+12:07:57 - USER   : [INFO ] chips     
+12:07:57 - USER   : [INFO ] 
+
+12:07:59 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+12:08:01 - USER   : [INFO ] Command progress 1
+12:08:03 - USER   : [INFO ] Command progress 3
+12:08:05 - USER   : [INFO ] Command progress 4
+12:08:05 - USER   : [INFO ] Command DONE
+12:09:45 - USER   : [INFO ] Closing User
+12:15:03 - USER   : [INFO ] Connecting...
+12:15:03 - USER   : [INFO ] Connected
+12:15:03 - USER   : [INFO ] Restaurant name : Pizza2!
+
+12:15:03 - USER   : [INFO ] aliments disponibles :
+
+12:15:03 - USER   : [INFO ] pizza     
+12:15:03 - USER   : [INFO ] chips     
+12:15:03 - USER   : [INFO ] 
+
+12:15:06 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+12:15:07 - USER   : [INFO ] Command progress 1
+12:15:09 - USER   : [INFO ] Command progress 3
+12:15:11 - USER   : [INFO ] Command progress 4
+12:15:11 - USER   : [INFO ] Command DONE
+12:15:52 - USER   : [INFO ] Closing User
+12:18:12 - USER   : [INFO ] Connecting...
+12:18:12 - USER   : [INFO ] Connected
+12:18:12 - USER   : [INFO ] Restaurant name : Pizza2!
+
+12:18:12 - USER   : [INFO ] aliments disponibles :
+
+12:18:12 - USER   : [INFO ] pizza     
+12:18:12 - USER   : [INFO ] chips     
+12:18:12 - USER   : [INFO ] 
+
+12:18:16 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+12:18:19 - USER   : [INFO ] Command progress 1
+12:18:21 - USER   : [INFO ] Command progress 3
+12:18:23 - USER   : [INFO ] Command progress 4
+12:18:23 - USER   : [INFO ] Command DONE
+12:18:55 - USER   : [INFO ] Closing User
+12:18:55 - USER   : [ERROR] Can't open perm queue : No such file or directory
+12:19:18 - USER   : [INFO ] Connecting...
+12:19:18 - USER   : [INFO ] Connected
+12:19:18 - USER   : [INFO ] Restaurant name : Pizza2!
+
+12:19:18 - USER   : [INFO ] aliments disponibles :
+
+12:19:18 - USER   : [INFO ] pizza     
+12:19:18 - USER   : [INFO ] chips     
+12:19:18 - USER   : [INFO ] 
+
+12:19:21 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 2
+12:19:23 - USER   : [INFO ] Command progress 1
+12:19:51 - USER   : [INFO ] Closing User
