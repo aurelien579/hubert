@@ -48,6 +48,7 @@ struct msg_status {
 };
 
 #define COMMAND_START   1
+#define COMMAND_RECVEIVED   5
 #define COMMAND_COOKED  2
 #define COMMAND_SENT    3
 #define COMMAND_ARRIVED 4

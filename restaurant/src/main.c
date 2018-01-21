@@ -437,6 +437,7 @@ int main(int argc, char **argv)
     } else {
         while(1) {
             struct msg_command command;
+            
             if (msgrcv(q, &command, MSG_COMMAND_SIZE, getpid(), 0) < 0) {
                 rest_panic("While receiving");
             }

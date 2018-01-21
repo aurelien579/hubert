@@ -34,10 +34,11 @@ struct user {
 
 #define HUBERT_MEM_SEM  "hubert_mem"
 #define HUBERT_MEM_KEY  3212
-struct hubert_mem {    
+struct hubert_mem {
     struct rest rests[RESTS_MAX];
     int rests_count;
-    struct driver drivers[DRIVER_MAX];};
+    struct driver drivers[DRIVER_MAX];
+};
 
 static int running = 1;
 static int perm_queue = -1;
@@ -55,7 +56,8 @@ void main_close(int n)
     printf("\n");
     log_hubert("Closing hubert.");
     
-    if (hubert_mem) {        shmdt(hubert_mem);
+    if (hubert_mem) {
+        shmdt(hubert_mem);
     }
     
     if (perm_queue >= 0) {
@@ -66,7 +68,8 @@ void main_close(int n)
         shmctl(hubert_mem_key, IPC_RMID, 0);
     }
     
-    for (int i = 0; i < users_count; i++) {        int key = msgget(users[i].key, 0);
+    for (int i = 0; i < users_count; i++) {
+        int key = msgget(users[i].key, 0);
         if (key >= 0) {
             msgctl(key, IPC_RMID, 0);
         }
@@ -131,7 +134,8 @@ int connect_rest(int key)
     char key_str[NAME_MAX];
     sprintf(key_str, "%d", key);
     hubert_mem->rests[n].mutex = sem_open(key_str, 0);
-    if (hubert_mem->rests[n].mutex == SEM_FAILED) {        return -1;
+    if (hubert_mem->rests[n].mutex == SEM_FAILED) {
+        return -1;
     }
     
     int rest_key = shmget(key, sizeof(struct menu), 0);
@@ -205,11 +209,12 @@ void send_status(int dest, int status)
 }
 
 static int send_menu(int q, int dest)
-{   
+{
     struct msg_menus menus;
     int count = 0;
     
-    for (int i = 0; i < hubert_mem->rests_count; i++) {        int rest_key = shmget(hubert_mem->rests[i].key, sizeof(struct menu), 0);
+    for (int i = 0; i < hubert_mem->rests_count; i++) {
+        int rest_key = shmget(hubert_mem->rests[i].key, sizeof(struct menu), 0);
         if (rest_key < 0) {
             log_user_error("Can't get shared memory of rest %d",
                            hubert_mem->rests[i].key);
@@ -236,9 +241,11 @@ static int send_menu(int q, int dest)
     menus.dest = dest;
 
     if (msgsnd(q, &menus, MSG_MENUS_SIZE, 0) < 0) {
-        return 0;    }
+        return 0;
+    }
     
-    return 1;}
+    return 1;
+}
 
 static int user_recv_command(int q, struct command *cmd)
 {
@@ -302,7 +309,8 @@ static void user(int key)
 {
     int user_q = msgget(key, 0);
     
-    if (user_q < 0) {        log_user_error("Can't open user queue");
+    if (user_q < 0) {
+        log_user_error("Can't open user queue");
         return;
     }
     
@@ -314,9 +322,11 @@ static void user(int key)
             continue;
         }
         
-        switch (request.type) {        case MENU_REQUEST:
+        switch (request.type) {
+        case MENU_REQUEST:
             log_user("MENU_REQUEST");
-            if (!send_menu(user_q, key)) {                log_user_error("Error while sending menus");
+            if (!send_menu(user_q, key)) {
+                log_user_error("Error while sending menus");
             }
             break;
         case COMMAND_REQUEST:
@@ -364,7 +374,9 @@ static void user(int key)
             deliver_command(&cmd);
             
             break;
-        }    }}
+        }
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -376,10 +388,12 @@ int main(int argc, char **argv)
     
     hubert_mem_key = shmget(HUBERT_MEM_KEY, sizeof(struct hubert_mem), IPC_CREAT | 0666);
     if (hubert_mem_key < 0) {
-        hubert_panic("Can't get shared memory key");    }
+        hubert_panic("Can't get shared memory key");
+    }
     
     hubert_mem = shmat(hubert_mem_key, 0, 0);
-    if (hubert_mem == (void *) -1) {        hubert_panic("Can't attach shared memory");
+    if (hubert_mem == (void *) -1) {
+        hubert_panic("Can't attach shared memory");
     }
     
     for (int i = 0; i < DRIVER_MAX; i++) {
@@ -400,7 +414,8 @@ int main(int argc, char **argv)
             log_hubert("Connecting user %d", state.key);
             status = connect_user(state.key);
 
-            if (msgget(state.key, IPC_CREAT | 0666) < 0) {                log_hubert("Can't create user queue.");
+            if (msgget(state.key, IPC_CREAT | 0666) < 0) {
+                log_hubert("Can't create user queue.");
                 send_status(state.key, STATUS_ERROR);
                 break;
             }
@@ -426,7 +441,8 @@ int main(int argc, char **argv)
         case REST_CONNECT:
             log_hubert("Connecting restaurant %d", state.key);
             status = connect_rest(state.key);
-            if (status < 0) {                log_hubert("Can't connect restaurant %d", state.key);
+            if (status < 0) {
+                log_hubert("Can't connect restaurant %d", state.key);
             }
             
             send_status(state.key, status);
