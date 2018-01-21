@@ -22,6 +22,8 @@
   <VirtualDirectory Name="hubert">
     <VirtualDirectory Name="src">
       <File Name="hubert/src/main.c"/>
+      <File Name="hubert/src/driver.c"/>
+      <File Name="hubert/src/driver.h"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <Description/>

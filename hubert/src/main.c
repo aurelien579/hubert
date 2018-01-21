@@ -17,6 +17,10 @@
 #include <errno.h>
 #include <error.h>
 
+#include "driver.h"
+
+#define DRIVER_MAX  5
+
 struct rest {
     char    name[NAME_MAX];
     int     key;
@@ -32,7 +36,8 @@ struct user {
 #define HUBERT_MEM_KEY  3212
 struct hubert_mem {    
     struct rest rests[RESTS_MAX];
-    int rests_count;};
+    int rests_count;
+    struct driver drivers[DRIVER_MAX];};
 
 static int running = 1;
 static int perm_queue = -1;
@@ -71,12 +76,27 @@ void main_close(int n)
         }
     }
     
+    for (int i = 0; i < DRIVER_MAX; i++) {
+        driver_terminate(&hubert_mem->drivers[i]);
+    }
+    
     sem_unlink(HUBERT_MEM_SEM);
     
     exit(0);
 }
 
 PANIC_FUNCTION(hubert, main_close)
+
+static struct driver *get_ready_driver()
+{
+    for (int i = 0; i < DRIVER_MAX; i++) {
+        if (driver_is_ready(&hubert_mem->drivers[i])) {
+            return &hubert_mem->drivers[i];
+        }
+    }
+    
+    return NULL;
+}
 
 static int get_rest_pid(char *name)
 {
@@ -263,24 +283,18 @@ static int send_command_status_to_user(int queue, struct msg_command_status *msg
     }
 }
 
-static void send_command(int user_queue, const char *rest_name, int user_pid)
+/**
+ * @brief Deliver the command to the user
+ */
+static void deliver_command(struct command *cmd)
 {
-    struct msg_command_status msg = { .dest = user_pid, .time = 2, .status = COMMAND_SENT };
-    strncpy(msg.rest_name, rest_name, NAME_MAX);
+    struct driver *driver = NULL;
+    do {        
+        driver = get_ready_driver();
+        sleep(1);
+    } while (driver == NULL);
     
-    if (!send_command_status_to_user(user_queue, &msg)) {
-        log_user_error("send_command_status_to_user");
-        return;                
-    }
-    
-    sleep(2);
-    
-    msg.status = COMMAND_ARRIVED;
-    msg.time = 0;
-    if (!send_command_status_to_user(user_queue, &msg)) {
-        log_user_error("send_command_status_to_user");
-        return;                
-    }
+    driver_deliver(driver, *cmd);
 }
 
 /* TODO: Correct memory leak (make a user_close function that close the mutex */
@@ -295,7 +309,6 @@ static void user(int key)
     struct msg_request request;
     
     while (1) {
-        //log_user("Reading...");
         if (msgrcv(user_q, &request, MSG_REQUEST_SIZE, HUBERT_DEST, 0) < 0) {
             log_user_error("Error while reading");
             continue;
@@ -348,9 +361,7 @@ static void user(int key)
                 break;
             }
             
-            send_command(user_q, msg_status.rest_name, cmd.user_pid);
-            
-            /* TODO: Send COMMAND_SENT to user, start delivery, send COMMAND_ARRIVED */
+            deliver_command(&cmd);
             
             break;
         }    }}
@@ -369,6 +380,10 @@ int main(int argc, char **argv)
     
     hubert_mem = shmat(hubert_mem_key, 0, 0);
     if (hubert_mem == (void *) -1) {        hubert_panic("Can't attach shared memory");
+    }
+    
+    for (int i = 0; i < DRIVER_MAX; i++) {
+        driver_new(&hubert_mem->drivers[i]);
     }
     
     log_hubert("Starting...");

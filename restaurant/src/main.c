@@ -353,9 +353,9 @@ int main(int argc, char **argv)
 {
     signal(SIGINT, on_close);
     
-    shmemid = shmget(HUBERT_KEY, sizeof(struct rest), IPC_CREAT | IPC_EXCL | 0666);
+    shmemid = shmget(getpid() + 1, sizeof(struct rest), IPC_CREAT | IPC_EXCL | 0666);
     if (shmemid < 0) {        
-        shmemid = shmget(HUBERT_KEY, sizeof(struct rest), IPC_CREAT | 0666);
+        shmemid = shmget(getpid() + 1, sizeof(struct rest), IPC_CREAT | 0666);
         shmctl(shmemid, IPC_RMID, NULL);
         rest_panic("Can't open shmemid");
         return -1;
