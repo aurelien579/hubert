@@ -221,11 +221,14 @@ static void on_command(struct command *c, int count)
     char name[NAME_MAX];
     int status;
     int time;
-    for (int i = 0; i < count * 2; i++) {
-        if (recv_command_status(name, &status, &time)) {
-            ui_set_command_status(ui, name, status, time);
+    for (int i = 0; i < count * 3; i++) {
+        if (recv_command_status(name, &status, &time)) {    
+            log_user("Command progress %d", status);
+            //ui_set_command_status(ui, name, status, time);
         }
-    }}
+    }
+    
+    log_user("Command DONE");}
 
 static void on_refresh()
 {    
@@ -246,15 +249,7 @@ static void on_close()
 
 static void *ui_thread(void *data)
 {
-    ui = ui_new();
-    ui_set_state(ui, DISCONNECTED);
-    ui_set_on_command(ui, on_command);
-    ui_set_on_refresh(ui, on_refresh);
-    ui_set_on_connect(ui, on_connect);
-    ui_set_on_close(ui, on_close);
-    ui_start(ui);
 
-    ui_free(ui);
     
     return NULL;
 }
@@ -277,14 +272,23 @@ int main(int argc, char **argv)
         user_panic("Can't open sempahore");        
     }
     
-    if (pthread_create(&thread, NULL, ui_thread, NULL) < 0) {
+    ui = ui_new();
+    ui_set_state(ui, DISCONNECTED);
+    ui_set_on_command(ui, on_command);
+    ui_set_on_refresh(ui, on_refresh);
+    ui_set_on_connect(ui, on_connect);
+    ui_set_on_close(ui, on_close);
+    ui_start(ui);
+
+    ui_free(ui);
+    /*if (pthread_create(&thread, NULL, ui_thread, NULL) < 0) {
         user_panic("Can't create ui thread");
     }    
     
     
     while (1) {
         
-    }
+    }*/
     
     client_close(0);
 

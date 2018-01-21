@@ -245,21 +245,41 @@ static int send_command_to_rest(int pid, struct command *cmd)
 
 static int recv_command_status_from_rest(int user_id, struct msg_command_status *msg)
 {
-    log_hubert("recv_command_status_from_rest");
     if (msgrcv(perm_queue, msg, MSG_STATUS_COMMAND_SIZE, user_id, 0) < 0) {
         return 0;
     } else {
+        log_hubert("recv_command_status_from_rest %d", msg->status);
         return 1;
     }    
 }
 
 static int send_command_status_to_user(int queue, struct msg_command_status *msg)
 {
-    log_hubert("send_command_status_to_user");
+    log_hubert("send_command_status_to_user %d", msg->status);
     if (msgsnd(queue, msg, MSG_STATUS_COMMAND_SIZE, 0) < 0) {
         return 0;
     } else {
         return 1;
+    }
+}
+
+static void send_command(int user_queue, const char *rest_name, int user_pid)
+{
+    struct msg_command_status msg = { .dest = user_pid, .time = 2, .status = COMMAND_SENT };
+    strncpy(msg.rest_name, rest_name, NAME_MAX);
+    
+    if (!send_command_status_to_user(user_queue, &msg)) {
+        log_user_error("send_command_status_to_user");
+        return;                
+    }
+    
+    sleep(2);
+    
+    msg.status = COMMAND_ARRIVED;
+    msg.time = 0;
+    if (!send_command_status_to_user(user_queue, &msg)) {
+        log_user_error("send_command_status_to_user");
+        return;                
     }
 }
 
@@ -327,6 +347,8 @@ static void user(int key)
                 log_user_error("recv_command_status_from_rest");
                 break;
             }
+            
+            send_command(user_q, msg_status.rest_name, cmd.user_pid);
             
             /* TODO: Send COMMAND_SENT to user, start delivery, send COMMAND_ARRIVED */
             

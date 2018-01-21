@@ -5,7 +5,7 @@ tomate 1
 formage 2
 olive 6
 }
-chips 30
+chips 2
 {
 patate 1
 }

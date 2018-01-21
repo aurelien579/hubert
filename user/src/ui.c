@@ -260,7 +260,7 @@ static void cli_print_state(WINDOW *w, enum user_state s)
             wprintw(w, "DISCONNECTED\n");
             wattroff(w, COLOR_PAIR(2) | A_BOLD);
             break;
-    }
+    } 
 }
 
 static void cli_down(struct ui *self)

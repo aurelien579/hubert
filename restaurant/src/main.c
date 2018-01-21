@@ -16,12 +16,7 @@
 #include <error.h>
 
 #define ALIMENTS_MAX    5
-#define COMMAND_MAX		10
-
-struct command_list {
-    struct command cmd;
-    struct command_list  *next;
-};
+#define COMMAND_MAX     10
 
 struct cuisine_stock {
     char aliments[ALIMENTS_MAX][NAME_MAX];
@@ -41,11 +36,14 @@ struct rest {
     char            name[NAME_MAX];
     struct receipe  recettes[FOODS_MAX];
     int             plates_count;
-    struct command_list *cmd_waiting;
+    struct command cmd_waiting[COMMAND_MAX];
+    int cmd_count;
 
 };
 
 static int cook_pid = -1;
+static struct rest *rest_mem = NULL;
+
 static sem_t *rest_mutex = NULL;
 static sem_t *hubert_mutex = NULL;
 static int shmemid = -1;
@@ -219,26 +217,11 @@ int time_command(struct rest *r, struct command cmd)
     return time;
 }
 
-void add_command(struct command *c)
-{
-    struct rest *r = shmat(shmemid, 0, 0);
-    
-    struct command_list *cmd = malloc(sizeof(struct command_list));
-    cmd->cmd = *c;
-    cmd->next = NULL;
-    
+void add_command(struct command c)
+{    
     sem_wait(rest_mutex);
-    
-    struct command_list **temp = &r->cmd_waiting;
-    while (*temp != NULL) {
-        temp = &(*temp)->next;
-    }
-    
-    *temp = cmd;
+    rest_mem->cmd_waiting[rest_mem->cmd_count++] = c;
     sem_post(rest_mutex);
-    
-    log_rest("add_command %p %d %s", r, r->cmd_waiting->cmd.count, r->cmd_waiting->cmd.name);
-    shmdt(r);
 }
 
 void buy_ingredients(struct command cmd)
@@ -247,10 +230,17 @@ void buy_ingredients(struct command cmd)
         
 }
 
+struct command pop_command(struct rest *r)
+{
+    struct command cmd = r->cmd_waiting[0];
+    memcpy(r->cmd_waiting, &r->cmd_waiting[1], (--r->cmd_count) * sizeof(struct command));
+    return cmd;
+}
+
 int cook_aliments(struct rest *r)
 {
     sem_wait(rest_mutex);
-    struct command cmd = r->cmd_waiting->cmd;    
+    struct command cmd = pop_command(r);
     sem_post(rest_mutex);
     
     log_rest("cook_aliments %p %s", r, cmd.name);
@@ -262,7 +252,7 @@ int cook_aliments(struct rest *r)
     
     struct msg_command_status rcv_command = { .dest=cmd.user_pid, .status= COMMAND_START, .time = time};
     strcpy(rcv_command.rest_name, r->name);
-    msgsnd(HUBERT_KEY, &rcv_command, MSG_COMMAND_SIZE, 0);
+    msgsnd(q, &rcv_command, MSG_STATUS_COMMAND_SIZE, 0);
     
     buy_ingredients(cmd);
     sleep(time);
@@ -271,17 +261,19 @@ int cook_aliments(struct rest *r)
 }
 
 void kitchen_process(struct cuisine_stock s)
-{
-    struct rest *r = shmat(shmemid, 0, 0);
-    
+{    
     while(1) {
         sleep(3);
-        if (r->cmd_waiting != NULL) {
-            if (cook_aliments(r)) {
-                log_rest("Cooked");
-                struct msg_command_status finish_cmd;
-            }
+        if (rest_mem->cmd_count > 0) {
+            int user_pid = rest_mem->cmd_waiting[0].user_pid;
             
+            if (cook_aliments(rest_mem)) {
+                struct msg_command_status msg = { .dest = user_pid, .status = COMMAND_COOKED, .time = 0 };
+                strcpy(msg.rest_name, rest_mem->name);
+                if (msgsnd(q, &msg, MSG_STATUS_COMMAND_SIZE, 0) < 0) {
+                    log_cook_error("While sending COMMAND_COOKED");
+                }
+            }
         }
     }
 }
@@ -316,14 +308,18 @@ int main(int argc, char **argv)
         rest_panic("Can't open hubert_mutex");
     }
     
-    struct rest *r = shmat(shmemid, 0, 0);
+    rest_mem = shmat(shmemid, 0, 0);
+    if (rest_mem == (void *) -1) {
+        rest_panic("Can't attach shared memory");
+    }
+    memset(rest_mem, 0, sizeof(struct rest));
+    
     struct cuisine_stock s;
     
-    if (!read_config("config.txt", r, &s)) {
+    if (!read_config("config.txt", rest_mem, &s)) {
         rest_panic("Can't read config");
         return -1;
     }
-    shmdt(r);
     
     if (!update_hubert_mem()) {
         rest_panic("Can't initialy update the menu");        
@@ -352,7 +348,7 @@ int main(int argc, char **argv)
                 rest_panic("While receiving");
             }
             
-            add_command(&command.command);
+            add_command(command.command);
         }
     }
     
