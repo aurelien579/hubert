@@ -16,9 +16,10 @@
 #include <error.h>
 #include <time.h>
 
-#define ALIMENTS_MAX    5
+#define ALIMENTS_MAX    15
 #define COMMAND_MAX     10
 #define RAND_FACTOR     5
+#define TIME_TO_BUY     16
 
 struct cuisine_stock {
     char aliments[ALIMENTS_MAX][NAME_MAX];
@@ -135,14 +136,23 @@ int ingredient_in_stock(struct cuisine_stock s, char *ingredient)
 	return -1;
 }
 
-int read_config(const char *filename, struct rest *r, struct cuisine_stock *s)
+int read_config(int nb_args, char *arg, struct cuisine_stock *s)
 {
-    
-    FILE *file = fopen(filename, "r");
+	char f[20] = "config1.txt";
+    if (nb_args > 2) {
+		rest_panic("too much arguments");
+	}
+	else if (nb_args == 2) {
+		strcpy(f, arg);
+	}
+	
+    FILE *file = fopen(f, "r");
     if (file == NULL) {
         return -1;
     }
-
+	
+	struct rest *r = rest_mem;
+	
     if (fgets(r->name, NAME_MAX, file) == NULL) {
         shmdt(r);
         return -1;
@@ -153,10 +163,11 @@ int read_config(const char *filename, struct rest *r, struct cuisine_stock *s)
     log_rest("Restaurant name : %s", r->name);
 
     char buffer[512];
-
+	log_rest("buffer ok");
+	
     while (fgets(buffer, 512, file) != NULL) {
         if (buffer[0] == '{') {
-
+		log_rest("test");
             fgets(buffer, 512, file);
             while (buffer[0] != '}') {
                 int n = r->plates_count;
@@ -179,8 +190,11 @@ int read_config(const char *filename, struct rest *r, struct cuisine_stock *s)
             sscanf(buffer, "%s %d" , r->recettes[r->plates_count].name, &r->recettes[r->plates_count].temps_prep);
         }
     }
-
-    log_rest("End reading config");
+    
+    print_rest(rest_mem);
+	print_stock(s);
+	log_rest("End reading config"); 
+    
     return 1;
 }
 
@@ -244,6 +258,7 @@ void add_command(struct command c)
     sem_wait(rest_mutex);
     rest_mem->cmd_waiting[rest_mem->cmd_count++] = c;
     sem_post(rest_mutex);
+    log_rest("add command %d", c.user_pid);
 }
 
 int rand_time(int a, int b)
@@ -280,23 +295,31 @@ void add_aliments_to_cmd(struct cuisine_stock *command_tot, struct receipe recet
 	}
 }
 
-void buy_aliments_if_needed(int cmd_need, struct cuisine_stock *s, int pos)
-{	
-	while (cmd_need > s->quantities[pos]) {
-		log_cook("need to buy %s", s->aliments[pos]);
-		sleep(rand_time(10, 20));
-		s->quantities[pos] += 50;					
+void buy_aliments_missing(struct cuisine_stock alims, struct cuisine_stock *s)
+{
+	int missing_count = 0;
+	for (int n=0; n<alims.aliments_count; n++) {
+		for (int i=0; i < s->aliments_count; i++) {
+			if (strcmp(alims.aliments[n], s->aliments[i]) == 0) {
+				while (alims.quantities[n] > s->quantities[i]) {
+					log_cook("need to buy %s", s->aliments[i]);
+					s->quantities[i] += 50;
+					missing_count++;
+				}
+			}
+		}
+	}
+	if (missing_count > 0) {
+		sleep(rand_time(TIME_TO_BUY, TIME_TO_BUY + RAND_FACTOR));
 	}
 }
 
 void pick_aliments(struct cuisine_stock aliments_needed, struct cuisine_stock *s)
-{
+{	
 	for (int n=0; n<aliments_needed.aliments_count; n++) {
 		for (int i=0; i < s->aliments_count; i++) {
 			if (strcmp(aliments_needed.aliments[n], s->aliments[i]) == 0) {
-				
-				buy_aliments_if_needed(aliments_needed.quantities[n], s, i);
-				
+			
 				s->quantities[i] -= aliments_needed.quantities[n];
 			}
 		}
@@ -308,7 +331,7 @@ void collect_ingredients(struct command cmd, struct cuisine_stock *s)
     struct cuisine_stock aliments_needed;
     aliments_needed.aliments_count = 0;
     
-	/* remplissage de ali_tot */
+	/* remplissage de aliments_needed */
 	for (int i=0; i<cmd.count; i++) {
 		
 		int n = find_repeice(cmd.foods[i]);
@@ -319,8 +342,10 @@ void collect_ingredients(struct command cmd, struct cuisine_stock *s)
 		add_aliments_to_cmd(&aliments_needed, recette, cmd.quantities[i]);
 	
 	}
-
+	printf("Aliments needed for command %d :", cmd.user_pid);
 	print_stock(&aliments_needed);
+	
+	buy_aliments_missing(aliments_needed, s);
 	
 	pick_aliments(aliments_needed, s);
 }
@@ -338,10 +363,9 @@ int cook_aliments(struct cuisine_stock *s)
 {
     
     struct command cmd = pop_command();
-    
-    //log_rest("cook_aliments %d %s for %d", cmd.quantities[0], cmd.foods[0], cmd.user_pid);
+    log_cook("starting command %d", cmd.user_pid);
     int time = time_command(cmd) + rand_time(0, RAND_FACTOR);
-    log_rest("time to prepare : %d", time);
+    log_cook("time to prepare : %d", time);
     if (time == 0) {
         log_cook_error("can't calcul command time");
         return 0;
@@ -350,14 +374,14 @@ int cook_aliments(struct cuisine_stock *s)
     if (!send_command_status(q, cmd.user_pid, COMMAND_START, time, cmd.name))
 		log_cook_error("Sending COMMAND_START to %d", cmd.user_pid);
 
-    log_cook("Collecting ingredients");
+    log_cook("Command %d : Collecting ingredients", cmd.user_pid);
     collect_ingredients(cmd, s);
-    log_cook("ingredients collectés");
+    log_cook("Command %d : Ingredients collectés",cmd.user_pid);
     log_cook("New stock :");
     print_stock(s);
-    log_cook("preparing command");
+    log_cook("Command %d : Preparing command", cmd.user_pid);
     sleep(time);
-    log_cook("commande prete !");
+    log_cook("Command %d : Command ready !", cmd.user_pid);
     return 1;
 }
 
@@ -375,27 +399,24 @@ void kitchen_process(struct cuisine_stock *s)
             	if (!send_command_status(q, user_pid, COMMAND_COOKED, 0, name_rest)) {
 				log_cook_error("send command status to hubert");
 				}
-				log_cook("command sent");
+				log_cook("Command sent");
 			}
         }
     }
 }
-int main(int argc, char **argv)
+
+void create_shmem_and_sem() 
 {
-    signal(SIGINT, on_close);
-    
-    shmemid = shmget(getpid() + 1, sizeof(struct rest), IPC_CREAT | IPC_EXCL | 0666);
+	shmemid = shmget(getpid() + 1, sizeof(struct rest), IPC_CREAT | IPC_EXCL | 0666);
     if (shmemid < 0) {        
         shmemid = shmget(getpid() + 1, sizeof(struct rest), IPC_CREAT | 0666);
         shmctl(shmemid, IPC_RMID, NULL);
         rest_panic("Can't open shmemid");
-        return -1;
     }
     
     shmemid_hubert = shmget(getpid(), sizeof(struct menu), IPC_CREAT | IPC_EXCL | 0666);
     if (shmemid_hubert < 0) {
         rest_panic("Can't open shmemid_hubert");
-        return -1;
     }
     
     char name[NAME_MAX];
@@ -408,8 +429,15 @@ int main(int argc, char **argv)
     sprintf(name, "%d", getpid() + 1);
     rest_mutex = sem_open(name, O_CREAT | O_EXCL, 0666, 1);
     if (rest_mutex == SEM_FAILED) {
-        rest_panic("Can't open hubert_mutex");
+        rest_panic("Can't open rest_mutex");
     }
+}
+
+int main(int argc, char *argv[])
+{
+    signal(SIGINT, on_close);
+    
+    create_shmem_and_sem();
     
     rest_mem = shmat(shmemid, 0, 0);
     if (rest_mem == (void *) -1) {
@@ -419,12 +447,10 @@ int main(int argc, char **argv)
     
     struct cuisine_stock *s = malloc(sizeof(struct cuisine_stock));
     
-    if (!read_config("config.txt", rest_mem, s)) {
+    if (!read_config(argc, argv[1], s)) {
         rest_panic("Can't read config");
         return -1;
     }
-    print_rest(rest_mem);
-	print_stock(s);
     
     if (!update_hubert_mem()) {
         rest_panic("Can't initialy update the menu");        
@@ -449,14 +475,14 @@ int main(int argc, char **argv)
     } else {
         while(1) {
 
-            struct command *cmd;
-            if (!recv_command(q, getpid(), cmd)) {
+            struct command cmd;
+            if (!recv_command(q, getpid(), &cmd)) {
 				log_rest_error("rcv command from hubert");
 			}
             
-            add_command(*cmd);
+            add_command(cmd);
             
-            if (!send_command_status(q, cmd->user_pid, COMMAND_ARRIVED, 0, cmd->name)) {
+            if (!send_command_status(q, cmd.user_pid, COMMAND_ARRIVED, 0, cmd.name)) {
 				log_rest_error("send command status to hubert");
 			}
         }

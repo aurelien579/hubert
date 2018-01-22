@@ -1,0 +1,16 @@
+Pizza!
+royale 10
+{
+tomate 2
+femental 3
+champignon 4
+pate 1
+}
+fromage 10
+{
+creme 2
+pate 1
+fchevre 2
+femental 3
+fbrebi 2
+}

@@ -1,0 +1,14 @@
+Tacos!
+tacos 10
+{
+poivron 1
+viande 2
+galette 1
+tomate 1
+}
+salade 5
+{
+fromage 1
+vinegrette 1
+mais 2
+}
