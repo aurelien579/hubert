@@ -285,7 +285,7 @@ static void user(int key)
                 log_user_error("user_recv_command error");
                 break;
             }
-			
+
 			log_hubert("Command from %d", cmd.user_pid);
             
             int rest_pid = get_rest_pid(cmd.name);

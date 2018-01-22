@@ -46,13 +46,13 @@ struct rest {
 };
 
 static int cook_pid = -1;
-static struct rest *rest_mem = NULL;
+static struct rest *rest_mem = NULL; /* mémoire partagé restaurant-cuisine */
 
-static sem_t *rest_mutex = NULL;
-static sem_t *hubert_mutex = NULL;
-static int shmemid = -1;
-static int shmemid_hubert = -1;
-static int q = -1;
+static sem_t *rest_mutex = NULL;	 /* sémaphore partagé restaurant-cuisine */
+static sem_t *hubert_mutex = NULL;	 /* sémaphore partagé hubert-restaurant */
+static int shmemid = -1;			 /* id mémoire partagé restaurant-cuisine */
+static int shmemid_hubert = -1;		 /* id mémoire partagé hubert-restaurant */
+static int q = -1;					 /* id file de message avec hubert */
 
 static void on_close(int n);
 
@@ -61,13 +61,13 @@ LOG_FUNCTIONS(cook)
 PANIC_FUNCTION(rest, on_close)
 
 static void disconnect()
-{    
+{/* fonction de déconnection du restaurant à hubert */
     struct msg_state msg = { HUBERT_DEST, REST_DISCONNECT, getpid() };
     msgsnd(q, &msg, MSG_STATE_SIZE, 0);
 }
 
 static void on_close(int n)
-{
+{/* fonction de fermeture du processus restaurant */
     log_rest("Closing Restaurant");
 
     if (shmemid > 0) {
@@ -104,7 +104,7 @@ static void on_close(int n)
 }
 
 void print_rest()
-{	
+{/* fonction d'affichage de la fiche restaurant */
 	sem_wait(rest_mutex);
     printf("\nRestaurant : %s, nb aliments : %d\n", rest_mem->name, rest_mem->plates_count);
     for (int i = 0; i < rest_mem->plates_count; i++) {
@@ -119,16 +119,15 @@ void print_rest()
     printf("\n");
 }
 
-void print_stock( struct cuisine_stock *s) 
-{
-	printf("Stock : \n\n");
+void print_stock( struct cuisine_stock *s)
+{/* fonction d'affichage du stock restaurant */
 	for (int i=0; i < s->aliments_count; i++) {
 		printf("%s : %d\n", s->aliments[i], s->quantities[i]);
 	}
 }
 
 int ingredient_in_stock(struct cuisine_stock s, char *ingredient)
-{
+{/* fonction de vérification de l'existence de l'ingrédient dans le stock */
 	for (int i = 0; i < s.aliments_count; i++) {
 		if (strcmp(ingredient, s.aliments[i]) == 0) {
 			return i;
@@ -138,7 +137,7 @@ int ingredient_in_stock(struct cuisine_stock s, char *ingredient)
 }
 
 int read_config(int nb_args, char *arg, struct cuisine_stock *s)
-{
+{/* fonction de récupération des informations associées au restaurant */
 	char f[20] = "config1.txt";
     if (nb_args > 2) {
 		rest_panic("too much arguments");
@@ -146,7 +145,9 @@ int read_config(int nb_args, char *arg, struct cuisine_stock *s)
 	else if (nb_args == 2) {
 		strcpy(f, arg);
 	}
-	
+	/* par défaut ouvre config1.txt, mais possible de rentrer une autre */
+	/* fiche restaurant si elle respecte les conventions de forme */
+    
     FILE *file = fopen(f, "r");
     if (file == NULL) {
         return -1;
@@ -191,8 +192,12 @@ int read_config(int nb_args, char *arg, struct cuisine_stock *s)
             sscanf(buffer, "%s %d" , r->recettes[r->plates_count].name, &r->recettes[r->plates_count].temps_prep);
         }
     }
-    
-    print_rest(rest_mem);
+    if (s->aliments_count > ALIMENTS_MAX) {
+		log_rest_panic("Too much aliments in restaurant");
+		on_close(-1);
+	}
+	
+    printf("Stock :\n\n");
 	print_stock(s);
 	log_rest("End reading config"); 
     
@@ -200,7 +205,7 @@ int read_config(int nb_args, char *arg, struct cuisine_stock *s)
 }
 
 int update_hubert_mem()
-{
+{/* fonction de préparation du menu */
     struct menu *m = shmat(shmemid_hubert, 0, 0);
     struct rest *r = shmat(shmemid, 0, 0);
     
@@ -226,7 +231,7 @@ int update_hubert_mem()
 }
 
 static int connect()
-{
+{/* fonction de connection du restaurant à hubert */
     int key = getpid();
     struct msg_state msg = { HUBERT_DEST, REST_CONNECT, key };
     msgsnd(q, &msg, MSG_STATE_SIZE, 0);
@@ -238,7 +243,7 @@ static int connect()
 }
 
 int time_command(struct command cmd)
-{
+{/* fonction de calcul du temps necesaire à la préparation d'une commande */
     int time = 0;
     
     for (int i = 0; i < cmd.count; i++) {
@@ -251,24 +256,28 @@ int time_command(struct command cmd)
         sem_post(rest_mutex);
     }
     
-    return time;
+    return time;	// renvoie le temps maximum de préparation vis à vis de chacun des plats
 }
 
 void add_command(struct command c)
-{    
+{/* fonction d'ajout d'une comande recu à la liste des commandes à traiter */
     sem_wait(rest_mutex);
-    rest_mem->cmd_waiting[rest_mem->cmd_count++] = c;
-    sem_post(rest_mutex);
-    log_rest("add command %d", c.user_pid);
+    if (rest_mem->cmd_count == COMMAND_MAX) {
+		log_rest_panic("can't add new command : too much command");
+	} else {
+		rest_mem->cmd_waiting[rest_mem->cmd_count++] = c;
+		sem_post(rest_mutex);
+		log_rest("add command %d", c.user_pid);
+	}
 }
 
 int rand_time(int a, int b)
-{
+{/* fonction de calcul d'un temps aléatoire */
     return rand()%(b-a) +a;
 }
 
 int find_repeice(char *name)
-{
+{/* fonction de recherche de la recette associé au nom donné en parametre */
 	sem_wait(rest_mutex);
 	for (int n=0; n < rest_mem->plates_count; n++) {
 		if (strcmp(name, rest_mem->recettes[n].name) == 0) {
@@ -281,7 +290,7 @@ int find_repeice(char *name)
 }
 
 void add_aliments_to_cmd(struct cuisine_stock *command_tot, struct receipe recette , int commanded)
-{
+{/* fonction permettant de connaitre l'ensemble des ingrédients necessaires à une commande */
 	for (int j=0; j < recette.ingredients_count; j++) {
 		int pos = ingredient_in_stock(*command_tot, recette.name);
 		if (pos < 0) {
@@ -297,13 +306,13 @@ void add_aliments_to_cmd(struct cuisine_stock *command_tot, struct receipe recet
 }
 
 void buy_aliments_missing(struct cuisine_stock alims, struct cuisine_stock *s)
-{
+{/* fonction d'achat des aliments manquant à une commande */
 	int missing_count = 0;
 	for (int n=0; n<alims.aliments_count; n++) {
 		for (int i=0; i < s->aliments_count; i++) {
 			if (strcmp(alims.aliments[n], s->aliments[i]) == 0) {
 				while (alims.quantities[n] > s->quantities[i]) {
-					log_cook("need to buy %s", s->aliments[i]);
+					log_cook("buying %s...", s->aliments[i]);
 					s->quantities[i] += 50;
 					missing_count++;
 				}
@@ -315,8 +324,8 @@ void buy_aliments_missing(struct cuisine_stock alims, struct cuisine_stock *s)
 	}
 }
 
-void pick_aliments(struct cuisine_stock aliments_needed, struct cuisine_stock *s)
-{	
+void collect_aliments(struct cuisine_stock aliments_needed, struct cuisine_stock *s)
+{/* fonction de collecte des ingrédients dans le stock */
 	for (int n=0; n<aliments_needed.aliments_count; n++) {
 		for (int i=0; i < s->aliments_count; i++) {
 			if (strcmp(aliments_needed.aliments[n], s->aliments[i]) == 0) {
@@ -327,8 +336,8 @@ void pick_aliments(struct cuisine_stock aliments_needed, struct cuisine_stock *s
 	}	
 }
 
-void collect_ingredients(struct command cmd, struct cuisine_stock *s)
-{	
+void prepare_ingredients(struct command cmd, struct cuisine_stock *s)
+{/* fonction de preparation des ingrédients necessaires à la commande */
     struct cuisine_stock aliments_needed;
     aliments_needed.aliments_count = 0;
     
@@ -343,16 +352,16 @@ void collect_ingredients(struct command cmd, struct cuisine_stock *s)
 		add_aliments_to_cmd(&aliments_needed, recette, cmd.quantities[i]);
 	
 	}
-	printf("Aliments needed for command %d :", cmd.user_pid);
-	print_stock(&aliments_needed);
+	//printf("Aliments needed for command %d :\n", cmd.user_pid);
+	//print_stock(&aliments_needed);
 	
 	buy_aliments_missing(aliments_needed, s);
 	
-	pick_aliments(aliments_needed, s);
+	collect_aliments(aliments_needed, s);
 }
 
 struct command pop_command()
-{        
+{/* fonction de récupération de la plus vieille commande client dans la liste des commandes */        
 	sem_wait(rest_mutex);
     struct command cmd = rest_mem->cmd_waiting[0];
     memcpy(rest_mem->cmd_waiting, &rest_mem->cmd_waiting[1], (--rest_mem->cmd_count) * sizeof(struct command));
@@ -361,7 +370,7 @@ struct command pop_command()
 }
 
 int cook_aliments(struct cuisine_stock *s)
-{
+{/* fonction de preparation des commandes clients */
     
     struct command cmd = pop_command();
     log_cook("starting command %d", cmd.user_pid);
@@ -375,21 +384,20 @@ int cook_aliments(struct cuisine_stock *s)
     if (!msg_send_command_status(q, cmd.user_pid, COMMAND_START, time, cmd.name))
 		log_cook_error("Sending COMMAND_START to %d", cmd.user_pid);
 
-    log_cook("Command %d : Collecting ingredients", cmd.user_pid);
-    collect_ingredients(cmd, s);
-    log_cook("Command %d : Ingredients collectés",cmd.user_pid);
+    log_cook("Command %d : Collecting ingredients...", cmd.user_pid);
+    prepare_ingredients(cmd, s);
+    log_cook("Command %d : Ingredients collected",cmd.user_pid);
     log_cook("New stock :");
     print_stock(s);
-    log_cook("Command %d : Preparing command", cmd.user_pid);
+    log_cook("Command %d : Preparing command...", cmd.user_pid);
     sleep(time);
     log_cook("Command %d : Command ready !", cmd.user_pid);
     return 1;
 }
 
 void kitchen_process(struct cuisine_stock *s)
-{    
+{/* fonction gérant la cuisine */
     while(1) {
-        sleep(3);
         sem_wait(rest_mutex);
         if (rest_mem->cmd_count > 0) {
             int user_pid = rest_mem->cmd_waiting[0].user_pid;
@@ -409,7 +417,7 @@ void kitchen_process(struct cuisine_stock *s)
 }
 
 void create_shmem_and_sem() 
-{
+{/* fonction d'initialisation des mémoires partagées (cuisine-rest & rest-hubert) avec les sémaphores associés */
 	shmemid = shmget(getpid() + 1, sizeof(struct rest), IPC_CREAT | IPC_EXCL | 0666);
     if (shmemid < 0) {        
         shmemid = shmget(getpid() + 1, sizeof(struct rest), IPC_CREAT | 0666);
@@ -437,7 +445,7 @@ void create_shmem_and_sem()
 }
 
 int main(int argc, char *argv[])
-{
+{/* fonction principale du processus */
     signal(SIGINT, on_close);
     
     create_shmem_and_sem();
@@ -478,17 +486,17 @@ int main(int argc, char *argv[])
     } else {
         while(1) {
             struct command cmd;
-			log_rest("Reading command to %d", getpid());
+			log_rest("Reading command...", getpid());
             if (!msg_recv_command(q, getpid(), &cmd)) {
-				log_rest_error("rcv command from hubert");
+				log_rest("hubert diconnected");
+				on_close(-1);
 			}
-			log_rest("Command received");
             
             add_command(cmd);
-			log_rest("Command added");
 			
             if (!msg_send_command_status(q, cmd.user_pid, COMMAND_RECEIVED, 0, cmd.name)) {
-				log_rest_error("send command status to hubert");
+				log_rest_panic("hubert disconnected");
+				exit(-1);
 			}
         }
     }

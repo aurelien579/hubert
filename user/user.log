@@ -1,0 +1,289 @@
+12:58:12 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+12:58:13 - USER   : [INFO ] Connecting...
+12:58:13 - USER   : [INFO ] Connected
+12:58:14 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:58:14 - USER   : [INFO ] aliments disponibles :
+
+12:58:14 - USER   : [INFO ] royale     
+12:58:14 - USER   : [INFO ] fromage     
+12:58:14 - USER   : [INFO ] 
+
+12:58:22 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+			Food : fromage 2
+12:59:18 - USER   : [INFO ] Command DONE
+12:59:28 - USER   : [INFO ] Closing User
+12:55:01 - USER   : [INFO ] Connecting...
+12:55:01 - USER   : [INFO ] Connected
+12:55:03 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:55:03 - USER   : [INFO ] aliments disponibles :
+
+12:55:03 - USER   : [INFO ] royale     
+12:55:03 - USER   : [INFO ] fromage     
+12:55:03 - USER   : [INFO ] 
+
+12:55:21 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:55:21 - USER   : [INFO ] aliments disponibles :
+
+12:55:21 - USER   : [INFO ] royale     
+12:55:21 - USER   : [INFO ] fromage     
+12:55:21 - USER   : [INFO ] 
+
+12:55:22 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:55:22 - USER   : [INFO ] aliments disponibles :
+
+12:55:22 - USER   : [INFO ] royale     
+12:55:22 - USER   : [INFO ] fromage     
+12:55:22 - USER   : [INFO ] 
+
+12:55:32 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:56:01 - USER   : [INFO ] Command DONE
+12:56:17 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:57:00 - USER   : [INFO ] Command DONE
+12:57:09 - USER   : [INFO ] Command
+12:57:09 - USER   : [INFO ] Command DONE
+12:57:11 - USER   : [INFO ] Command
+12:57:11 - USER   : [INFO ] Command DONE
+12:58:21 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : fromage 2
+12:58:46 - USER   : [INFO ] Command DONE
+12:59:29 - USER   : [INFO ] Closing User
+13:02:12 - USER   : [INFO ] Connecting...
+13:02:12 - USER   : [INFO ] Connected
+13:02:12 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:02:12 - USER   : [INFO ] aliments disponibles :
+
+13:02:12 - USER   : [INFO ] tacos     
+13:02:12 - USER   : [INFO ] salade     
+13:02:12 - USER   : [INFO ] 
+
+13:02:25 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 1
+			Food : salade 2
+13:02:54 - USER   : [INFO ] Command DONE
+13:03:09 - USER   : [INFO ] Closing User
+13:16:24 - USER   : [INFO ] Connecting...
+13:16:24 - USER   : [INFO ] Connected
+13:16:26 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:16:26 - USER   : [INFO ] aliments disponibles :
+
+13:16:26 - USER   : [INFO ] tacos     
+13:16:26 - USER   : [INFO ] salade     
+13:16:26 - USER   : [INFO ] 
+
+13:35:35 - USER   : [INFO ] Closing User
+13:35:40 - USER   : [INFO ] Connecting...
+13:35:40 - USER   : [INFO ] Connected
+13:35:42 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:35:42 - USER   : [INFO ] aliments disponibles :
+
+13:35:42 - USER   : [INFO ] tacos     
+13:35:42 - USER   : [INFO ] salade     
+13:35:42 - USER   : [INFO ] 
+
+13:35:46 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 2
+			Food : salade 1
+13:36:15 - USER   : [INFO ] Command DONE
+13:36:18 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 2
+			Food : salade 1
+13:37:00 - USER   : [INFO ] Closing User
+13:37:00 - USER   : [ERROR] Can't open perm queue : No such file or directory
+13:39:36 - USER   : [INFO ] Connecting...
+13:39:36 - USER   : [INFO ] Connected
+13:39:41 - USER   : [INFO ] Closing User
+13:39:45 - USER   : [INFO ] Connecting...
+13:39:45 - USER   : [INFO ] Connected
+13:39:52 - USER   : [INFO ] Closing User
+13:40:57 - USER   : [INFO ] Connecting...
+13:40:57 - USER   : [INFO ] Connected
+13:40:57 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:40:57 - USER   : [INFO ] aliments disponibles :
+
+13:40:57 - USER   : [INFO ] tacos     
+13:40:57 - USER   : [INFO ] salade     
+13:40:57 - USER   : [INFO ] 
+
+13:40:59 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 2
+			Food : salade 1
+13:41:58 - USER   : [INFO ] Command DONE
+13:42:07 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+13:42:07 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:42:07 - USER   : [INFO ] aliments disponibles :
+
+13:42:07 - USER   : [INFO ] tacos     
+13:42:07 - USER   : [INFO ] salade     
+13:42:07 - USER   : [INFO ] 
+
+13:42:09 - USER   : [INFO ] Closing User
+13:42:09 - USER   : [ERROR] Can't open perm queue : No such file or directory
+13:40:03 - USER   : [INFO ] Connecting...
+13:40:03 - USER   : [INFO ] Connected
+13:40:04 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:40:04 - USER   : [INFO ] aliments disponibles :
+
+13:40:04 - USER   : [INFO ] tacos     
+13:40:04 - USER   : [INFO ] salade     
+13:40:04 - USER   : [INFO ] 
+
+13:40:11 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 2
+			Food : salade 1
+13:40:39 - USER   : [INFO ] Command DONE
+13:40:40 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 2
+			Food : salade 1
+13:41:26 - USER   : [INFO ] Command DONE
+13:42:05 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+13:42:05 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:42:05 - USER   : [INFO ] aliments disponibles :
+
+13:42:05 - USER   : [INFO ] tacos     
+13:42:05 - USER   : [INFO ] salade     
+13:42:05 - USER   : [INFO ] 
+
+13:42:09 - USER   : [INFO ] Closing User
+13:42:09 - USER   : [ERROR] Can't open perm queue : No such file or directory
+13:42:27 - USER   : [INFO ] Connecting...
+13:42:27 - USER   : [INFO ] Connected
+13:42:27 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:42:27 - USER   : [INFO ] aliments disponibles :
+
+13:42:27 - USER   : [INFO ] tacos     
+13:42:27 - USER   : [INFO ] salade     
+13:42:27 - USER   : [INFO ] 
+
+13:42:34 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 2
+13:43:32 - USER   : [INFO ] Command DONE
+13:44:57 - USER   : [INFO ] Closing User
+13:44:57 - USER   : [ERROR] Can't open perm queue : No such file or directory
+13:42:23 - USER   : [INFO ] Connecting...
+13:42:23 - USER   : [INFO ] Connected
+13:42:23 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:42:23 - USER   : [INFO ] aliments disponibles :
+
+13:42:23 - USER   : [INFO ] tacos     
+13:42:23 - USER   : [INFO ] salade     
+13:42:23 - USER   : [INFO ] 
+
+13:42:32 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 2
+			Food : salade 1
+13:43:00 - USER   : [INFO ] Command DONE
+13:44:57 - USER   : [INFO ] Closing User
+13:44:57 - USER   : [ERROR] Can't open perm queue : No such file or directory
+13:45:15 - USER   : [INFO ] Connecting...
+13:45:15 - USER   : [INFO ] Connected
+13:45:16 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:45:16 - USER   : [INFO ] aliments disponibles :
+
+13:45:16 - USER   : [INFO ] tacos     
+13:45:16 - USER   : [INFO ] salade     
+13:45:16 - USER   : [INFO ] 
+
+13:45:18 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 2
+			Food : salade 2
+13:45:25 - USER   : [ERROR] Can't recv command status : Identifier removed
+13:45:25 - USER   : [ERROR] Can't recv command status : Invalid argument
+13:45:25 - USER   : [INFO ] Command DONE
+13:45:27 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+13:45:27 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:45:27 - USER   : [INFO ] aliments disponibles :
+
+13:45:27 - USER   : [INFO ] tacos     
+13:45:27 - USER   : [INFO ] salade     
+13:45:27 - USER   : [INFO ] 
+
+13:45:30 - USER   : [INFO ] Closing User
+13:45:30 - USER   : [ERROR] Can't open perm queue : No such file or directory
+13:46:50 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+13:46:51 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+13:46:55 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+13:46:56 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+13:46:57 - USER   : [INFO ] Connecting...
+13:46:57 - USER   : [INFO ] Connected
+13:46:58 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:46:58 - USER   : [INFO ] aliments disponibles :
+
+13:46:58 - USER   : [INFO ] tacos     
+13:46:58 - USER   : [INFO ] salade     
+13:46:58 - USER   : [INFO ] 
+
+13:47:06 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:47:06 - USER   : [INFO ] aliments disponibles :
+
+13:47:06 - USER   : [INFO ] tacos     
+13:47:06 - USER   : [INFO ] salade     
+13:47:06 - USER   : [INFO ] 
+
+13:47:11 - USER   : [INFO ] Command
+		Command in : Tacos!
+			Food : tacos 1
+			Food : salade 2
+13:47:15 - USER   : [ERROR] Can't recv command status : Identifier removed
+13:47:15 - USER   : [ERROR] Can't recv command status : Invalid argument
+13:47:15 - USER   : [INFO ] Command DONE
+13:47:18 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+13:47:18 - USER   : [INFO ] Restaurant name : Tacos!
+
+13:47:18 - USER   : [INFO ] aliments disponibles :
+
+13:47:18 - USER   : [INFO ] tacos     
+13:47:18 - USER   : [INFO ] salade     
+13:47:18 - USER   : [INFO ] 
+
+13:47:19 - USER   : [INFO ] Closing User
+13:47:19 - USER   : [ERROR] Can't open perm queue : No such file or directory
+14:20:35 - USER   : [INFO ] Connecting...
+14:20:35 - USER   : [INFO ] Connected
+14:20:36 - USER   : [INFO ] Restaurant name : Pizza!
+
+14:20:36 - USER   : [INFO ] aliments disponibles :
+
+14:20:36 - USER   : [INFO ] royale     
+14:20:36 - USER   : [INFO ] fromage     
+14:20:36 - USER   : [INFO ] 
+
+14:20:39 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+			Food : fromage 2
+14:21:23 - USER   : [INFO ] Command DONE
+14:21:30 - USER   : [INFO ] Closing User
+14:21:30 - USER   : [ERROR] Can't open perm queue : No such file or directory
