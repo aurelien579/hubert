@@ -623,3 +623,168 @@
 19:11:24 - USER   : [INFO ] Command DONE
 19:17:14 - USER   : [INFO ] Closing User
 19:17:14 - USER   : [ERROR] Can't open perm queue : No such file or directory
+11:59:15 - USER   : [INFO ] Connecting...
+11:59:15 - USER   : [INFO ] Connected
+11:59:15 - USER   : [INFO ] Restaurant name : Pizza!
+
+11:59:15 - USER   : [INFO ] aliments disponibles :
+
+11:59:15 - USER   : [INFO ] royale     
+11:59:15 - USER   : [INFO ] fromage     
+11:59:15 - USER   : [INFO ] 
+
+11:59:32 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+11:59:46 - USER   : [ERROR] Can't recv command status : Identifier removed
+11:59:46 - USER   : [ERROR] Can't recv command status : Invalid argument
+11:59:46 - USER   : [ERROR] Can't recv command status : Invalid argument
+11:59:46 - USER   : [INFO ] Command DONE
+11:59:48 - USER   : [INFO ] Closing User
+11:59:48 - USER   : [ERROR] Can't open perm queue : No such file or directory
+12:01:57 - USER   : [INFO ] Connecting...
+12:01:57 - USER   : [INFO ] Connected
+12:01:57 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:01:57 - USER   : [INFO ] aliments disponibles :
+
+12:01:57 - USER   : [INFO ] royale     
+12:01:57 - USER   : [INFO ] fromage     
+12:01:57 - USER   : [INFO ] 
+
+12:01:59 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:02:53 - USER   : [ERROR] Can't recv command status : Identifier removed
+12:02:53 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:02:53 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:02:53 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:02:53 - USER   : [INFO ] Command DONE
+12:02:58 - USER   : [INFO ] Closing User
+12:03:01 - USER   : [INFO ] Connecting...
+12:03:01 - USER   : [INFO ] Connected
+12:03:02 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:03:02 - USER   : [INFO ] aliments disponibles :
+
+12:03:02 - USER   : [INFO ] royale     
+12:03:02 - USER   : [INFO ] fromage     
+12:03:02 - USER   : [INFO ] 
+
+12:03:04 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:03:08 - USER   : [INFO ] Closing User
+12:03:31 - USER   : [INFO ] Connecting...
+12:03:31 - USER   : [INFO ] Connected
+12:03:32 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:03:32 - USER   : [INFO ] aliments disponibles :
+
+12:03:32 - USER   : [INFO ] royale     
+12:03:32 - USER   : [INFO ] fromage     
+12:03:32 - USER   : [INFO ] 
+
+12:03:33 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:03:39 - USER   : [ERROR] Can't recv command status : Identifier removed
+12:03:39 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:03:39 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:03:39 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:03:39 - USER   : [INFO ] Command DONE
+12:03:40 - USER   : [INFO ] Closing User
+12:03:40 - USER   : [ERROR] Can't open perm queue : No such file or directory
+12:04:28 - USER   : [INFO ] Connecting...
+12:04:28 - USER   : [INFO ] Connected
+12:04:29 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:04:29 - USER   : [INFO ] aliments disponibles :
+
+12:04:29 - USER   : [INFO ] royale     
+12:04:29 - USER   : [INFO ] fromage     
+12:04:29 - USER   : [INFO ] 
+
+12:04:30 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:04:37 - USER   : [ERROR] Can't recv command status : Identifier removed
+12:04:37 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:04:37 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:04:37 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:04:37 - USER   : [INFO ] Command DONE
+12:04:38 - USER   : [INFO ] Closing User
+12:04:38 - USER   : [ERROR] Can't open perm queue : No such file or directory
+12:05:29 - USER   : [INFO ] Connecting...
+12:05:29 - USER   : [INFO ] Connected
+12:05:29 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:05:29 - USER   : [INFO ] aliments disponibles :
+
+12:05:29 - USER   : [INFO ] royale     
+12:05:29 - USER   : [INFO ] fromage     
+12:05:29 - USER   : [INFO ] 
+
+12:05:33 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:05:39 - USER   : [INFO ] Closing User
+12:08:45 - USER   : [INFO ] Connecting...
+12:08:45 - USER   : [INFO ] Connected
+12:08:46 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:08:46 - USER   : [INFO ] aliments disponibles :
+
+12:08:46 - USER   : [INFO ] royale     
+12:08:46 - USER   : [INFO ] fromage     
+12:08:46 - USER   : [INFO ] 
+
+12:08:48 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:10:38 - USER   : [ERROR] Can't recv command status : Identifier removed
+12:10:38 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:10:38 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:10:38 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:10:38 - USER   : [INFO ] Command DONE
+12:10:47 - USER   : [INFO ] Closing User
+12:10:51 - USER   : [INFO ] Connecting...
+12:10:51 - USER   : [INFO ] Connected
+12:10:51 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:10:51 - USER   : [INFO ] aliments disponibles :
+
+12:10:51 - USER   : [INFO ] royale     
+12:10:51 - USER   : [INFO ] fromage     
+12:10:51 - USER   : [INFO ] 
+
+12:10:52 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:10:59 - USER   : [ERROR] Can't recv command status : Identifier removed
+12:10:59 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:10:59 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:10:59 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:10:59 - USER   : [INFO ] Command DONE
+12:11:00 - USER   : [INFO ] Closing User
+12:11:00 - USER   : [ERROR] Can't open perm queue : No such file or directory
+12:16:06 - USER   : [INFO ] Connecting...
+12:16:06 - USER   : [INFO ] Connected
+12:16:06 - USER   : [INFO ] Restaurant name : Pizza!
+
+12:16:06 - USER   : [INFO ] aliments disponibles :
+
+12:16:06 - USER   : [INFO ] royale     
+12:16:06 - USER   : [INFO ] fromage     
+12:16:06 - USER   : [INFO ] 
+
+12:16:08 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+12:17:24 - USER   : [ERROR] Can't recv command status : Identifier removed
+12:17:24 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:17:24 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:17:24 - USER   : [ERROR] Can't recv command status : Invalid argument
+12:17:24 - USER   : [INFO ] Command DONE
+12:17:30 - USER   : [INFO ] Closing User
+12:17:30 - USER   : [ERROR] Can't open perm queue : No such file or directory

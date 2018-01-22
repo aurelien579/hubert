@@ -269,8 +269,11 @@ static void cli_print_commands(struct ui *self)
     for (int i = 0; i < self->commands_count; i++) {
         wprintw(self->win, "%s : ", self->commands[i].name);
         switch (self->commands[i].status) {
-            case COMMAND_START:
+            case COMMAND_RECEIVED:
                 wprintw(self->win, "Received by restaurant\n");
+                break;
+            case COMMAND_START:
+                wprintw(self->win, "Started\n");
                 break;
             case COMMAND_SENT:
                 wprintw(self->win, "Delivering...\n");

@@ -18,6 +18,9 @@
       <File Name="libmsg/include/types.h"/>
       <File Name="libmsg/include/msg.h"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="src">
+      <File Name="libmsg/src/msg.c"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="hubert">
     <VirtualDirectory Name="src">

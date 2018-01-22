@@ -7,6 +7,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/msg.h>
+#include <sys/types.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -371,7 +372,7 @@ int cook_aliments(struct cuisine_stock *s)
         return 0;
     }
     
-    if (!send_command_status(q, cmd.user_pid, COMMAND_START, time, cmd.name))
+    if (!msg_send_command_status(q, cmd.user_pid, COMMAND_START, time, cmd.name))
 		log_cook_error("Sending COMMAND_START to %d", cmd.user_pid);
 
     log_cook("Command %d : Collecting ingredients", cmd.user_pid);
@@ -396,7 +397,7 @@ void kitchen_process(struct cuisine_stock *s)
             strcpy(name_rest, rest_mem->cmd_waiting[0].name);
 			sem_post(rest_mutex);
             if (cook_aliments(s)) {
-            	if (!send_command_status(q, user_pid, COMMAND_COOKED, 0, name_rest)) {
+            	if (!msg_send_command_status(q, user_pid, COMMAND_COOKED, 0, name_rest)) {
 				log_cook_error("send command status to hubert");
 				}
 				log_cook("Command sent");
@@ -474,15 +475,17 @@ int main(int argc, char *argv[])
         kitchen_process(s);
     } else {
         while(1) {
-
             struct command cmd;
-            if (!recv_command(q, getpid(), &cmd)) {
+			log_rest("Reading command to %d", getpid());
+            if (!msg_recv_command(q, getpid(), &cmd)) {
 				log_rest_error("rcv command from hubert");
 			}
+			log_rest("Command received");
             
             add_command(cmd);
-            
-            if (!send_command_status(q, cmd.user_pid, COMMAND_ARRIVED, 0, cmd.name)) {
+			log_rest("Command added");
+			
+            if (!msg_send_command_status(q, cmd.user_pid, COMMAND_RECEIVED, 0, cmd.name)) {
 				log_rest_error("send command status to hubert");
 			}
         }

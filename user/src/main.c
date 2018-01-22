@@ -157,16 +157,14 @@ static void print_menus(struct menu m[], int n)
     }
 }
 
-static int send_command(struct command *c)
+static int send_command(const struct command *c)
 {
-    struct msg_request request = { HUBERT_DEST, COMMAND_REQUEST };
-    if (msgsnd(user_queue, &request, MSG_REQUEST_SIZE, 0) < 0) {
+    if (!msg_send_request(user_queue, HUBERT_DEST, COMMAND_REQUEST)) {
         log_user_error("Can't send request to hubert");
         return 0;
     }
-    
-    struct msg_command msg = { HUBERT_DEST, *c };    
-    if (msgsnd(user_queue, &msg, MSG_COMMAND_SIZE, 0) < 0) {
+       
+    if (!msg_send_command(user_queue, HUBERT_DEST, c)) {
         log_user_error("Can't send command to huber");
         return 0;
     }
@@ -221,7 +219,7 @@ static void on_command(struct command *c, int count)
     char name[NAME_MAX];
     int status;
     int time;
-    for (int i = 0; i < count * 3; i++) {
+    for (int i = 0; i < count * 4; i++) {
         if (recv_command_status(name, &status, &time)) {
             ui_set_command_status(ui, name, status, time);
         }
