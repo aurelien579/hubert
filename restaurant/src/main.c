@@ -448,6 +448,7 @@ int main(int argc, char **argv)
         kitchen_process(s);
     } else {
         while(1) {
+
             struct command *cmd;
             if (!recv_command(q, getpid(), cmd)) {
 				log_rest_error("rcv command from hubert");
