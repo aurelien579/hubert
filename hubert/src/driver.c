@@ -86,7 +86,6 @@ void driver_deliver(struct driver *self, struct command cmd)
 	log_driver("Delivering to %d", cmd.user_pid);
     self->pid = fork();
     if (self->pid == 0) {
-        self->ready = 0;
         int delay = calculate_delivery_time(&cmd);
         
         if (!notify_user_delivery_begin(&cmd, delay)) {

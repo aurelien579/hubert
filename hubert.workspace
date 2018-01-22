@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="hubert" Database="">
   <Project Name="hubert" Path="hubert.project" Active="Yes"/>
+  <Project Name="TcLogo" Path="../TcLogo/TcLogo.project" Active="No"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
       <Project Name="hubert" ConfigName="Debug"/>
+      <Project Name="TcLogo" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Environment/>
       <Project Name="hubert" ConfigName="Release"/>
+      <Project Name="TcLogo" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

@@ -1,0 +1,47 @@
+14:48:06 - USER   : [INFO ] Connecting...
+14:48:06 - USER   : [INFO ] Connected
+14:48:23 - USER   : [INFO ] Closing User
+14:48:39 - USER   : [INFO ] Connecting...
+14:48:39 - USER   : [INFO ] Connected
+14:48:40 - USER   : [INFO ] Restaurant name : 
+
+14:48:40 - USER   : [INFO ] aliments disponibles :
+
+14:48:40 - USER   : [INFO ] 
+
+14:48:42 - USER   : [INFO ] Closing User
+14:49:48 - USER   : [INFO ] Connecting...
+14:49:48 - USER   : [INFO ] Connected
+14:49:49 - USER   : [INFO ] Restaurant name : 
+
+14:49:49 - USER   : [INFO ] aliments disponibles :
+
+14:49:49 - USER   : [INFO ] 
+
+14:49:51 - USER   : [INFO ] Closing User
+14:50:00 - USER   : [INFO ] Connecting...
+14:50:00 - USER   : [INFO ] Connected
+14:50:01 - USER   : [INFO ] Restaurant name : Pizza!
+
+14:50:01 - USER   : [INFO ] aliments disponibles :
+
+14:50:01 - USER   : [INFO ] royale     
+14:50:01 - USER   : [INFO ] fromage     
+14:50:01 - USER   : [INFO ] 
+
+14:50:04 - USER   : [INFO ] Closing User
+14:51:57 - USER   : [INFO ] Connecting...
+14:51:57 - USER   : [INFO ] Connected
+14:51:57 - USER   : [INFO ] Restaurant name : Pizza!
+
+14:51:57 - USER   : [INFO ] aliments disponibles :
+
+14:51:57 - USER   : [INFO ] royale     
+14:51:57 - USER   : [INFO ] fromage     
+14:51:57 - USER   : [INFO ] 
+
+14:52:00 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 1
+14:52:26 - USER   : [INFO ] Command DONE
+14:52:39 - USER   : [INFO ] Closing User

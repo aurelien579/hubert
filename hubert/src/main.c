@@ -45,6 +45,7 @@ static int hubert_mem_key = -1;
 static struct user users[USER_MAX];
 static int users_count = 0;
 static struct hubert_mem *hubert_mem = NULL;
+static sem_t *mutex = NULL;
 
 LOG_FUNCTIONS(hubert)
 LOG_FUNCTIONS(user)
@@ -81,6 +82,11 @@ void main_close(int n)
             kill(users[i].pid, SIGTERM);            
         }
     }
+	
+	if (mutex) {
+		sem_destroy(mutex);
+		sem_unlink("hubert_sem");
+	}
     
     sem_unlink(HUBERT_MEM_SEM);
     
@@ -93,6 +99,7 @@ static struct driver *get_ready_driver()
 {
     for (int i = 0; i < DRIVER_MAX; i++) {
         if (driver_is_ready(&hubert_mem->drivers[i])) {
+			hubert_mem->drivers[i].ready = 0;
             return &hubert_mem->drivers[i];
         }
     }
@@ -247,11 +254,16 @@ static int send_menu(int q, int dest)
  */
 static void deliver_command(struct command *cmd)
 {
-    struct driver *driver = NULL;
-    do {        
+	sem_wait(mutex);
+    struct driver *driver = get_ready_driver();
+	sem_post(mutex);
+	
+    while (!driver) {
+		sleep(1);
+		sem_wait(mutex);
         driver = get_ready_driver();
-        sleep(1);
-    } while (driver == NULL);
+		sem_post(mutex);
+    }
     
     driver_deliver(driver, *cmd);
 }
@@ -288,7 +300,10 @@ static void user(int key)
 
 			log_hubert("Command from %d", cmd.user_pid);
             
+			sem_wait(mutex);
             int rest_pid = get_rest_pid(cmd.name);
+			sem_post(mutex);
+			
             if (rest_pid == 0) {
                 log_user_error("Can't find rest %s", cmd.name);
                 break;
@@ -353,6 +368,11 @@ int main(int argc, char **argv)
     if (hubert_mem == (void *) -1) {        hubert_panic("Can't attach shared memory");
     }
     
+    mutex = sem_open("hubert_sem", O_CREAT | O_EXCL, 0666, 1);
+    if (mutex == SEM_FAILED) {
+        hubert_panic("Can't open rest_mutex");
+    }
+	
     for (int i = 0; i < DRIVER_MAX; i++) {
         driver_new(&hubert_mem->drivers[i]);
     }
@@ -396,7 +416,10 @@ int main(int argc, char **argv)
             break;
         case REST_CONNECT:
             log_hubert("Connecting restaurant %d", state.key);
+			sem_wait(mutex);
             status = connect_rest(state.key);
+			sem_post(mutex);
+			
             if (status < 0) {                log_hubert("Can't connect restaurant %d", state.key);
             }
             
@@ -404,7 +427,9 @@ int main(int argc, char **argv)
             break;
         case REST_DISCONNECT:
             log_hubert("Disconnecting restaurant %d", state.key);
+			sem_wait(mutex);
             disconnect_rest(state.key);
+			sem_post(mutex);
             break;
         }
     }

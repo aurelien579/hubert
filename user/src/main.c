@@ -28,7 +28,6 @@ int command_progress = 0;
 static int user_queue = -1;
 static int connected = 0;
 static struct ui *ui;
-static pthread_t thread;
 
 static void client_close(int n);
 
@@ -111,9 +110,7 @@ static void client_close(int n)
     
     if (ui) {
         ui_stop(ui);
-        
-        pthread_join(thread, NULL);
-    }
+	}
     
     if (mutex) {
         sem_destroy(mutex);
@@ -244,13 +241,6 @@ static void on_close()
     client_close(0);
 }
 
-static void *ui_thread(void *data)
-{
-
-    
-    return NULL;
-}
-
 int main(int argc, char **argv)
 {
     log_file = fopen("user.log", "a");
@@ -278,14 +268,6 @@ int main(int argc, char **argv)
     ui_start(ui);
 
     ui_free(ui);
-    /*if (pthread_create(&thread, NULL, ui_thread, NULL) < 0) {
-        user_panic("Can't create ui thread");
-    }    
-    
-    
-    while (1) {
-        
-    }*/
     
     client_close(0);
 
