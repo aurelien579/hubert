@@ -19,8 +19,8 @@
 
 LOG_FUNCTIONS(driver)
 
-#define BASE_DELIVERY_TIME  5
-#define RAND_FACTOR         2
+#define BASE_DELIVERY_TIME  10
+#define RAND_FACTOR         4
 
 static int calculate_delivery_time(struct command *cmd)
 {

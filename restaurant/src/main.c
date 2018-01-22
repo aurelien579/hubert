@@ -18,6 +18,7 @@
 
 #define ALIMENTS_MAX    5
 #define COMMAND_MAX     10
+#define RAND_FACTOR     5
 
 struct cuisine_stock {
     char aliments[ALIMENTS_MAX][NAME_MAX];
@@ -100,18 +101,20 @@ static void on_close(int n)
     exit(0);
 }
 
-void print_rest(struct rest *r)
-{
-    printf("\nRestaurant : %s, nb aliments : %d\n", r->name, r->plates_count);
-    for (int i = 0; i < r->plates_count; i++) {
+void print_rest()
+{	
+	sem_wait(rest_mutex);
+    printf("\nRestaurant : %s, nb aliments : %d\n", rest_mem->name, rest_mem->plates_count);
+    for (int i = 0; i < rest_mem->plates_count; i++) {
         printf("\nPlat : %s           temps de préparation : %d\nAliments necessaires :\n",
-               r->recettes[i].name, r->recettes[i].temps_prep);
-        for (int j = 0; j < r->recettes[i].ingredients_count; j++) {
-            printf("     %d %s", r->recettes[i].quantities[j],
-                                 r->recettes[i].ingredients[j]);
+               rest_mem->recettes[i].name, rest_mem->recettes[i].temps_prep);
+        for (int j = 0; j < rest_mem->recettes[i].ingredients_count; j++) {
+            printf("     %d %s", rest_mem->recettes[i].quantities[j],
+                                 rest_mem->recettes[i].ingredients[j]);
         }
-        printf("\n");
     }
+    sem_post(rest_mutex);
+    printf("\n");
 }
 
 void print_stock( struct cuisine_stock *s) 
@@ -219,22 +222,24 @@ static int connect()
     return status.status;
 }
 
-int time_command(struct rest *r, struct command cmd)
+int time_command(struct command cmd)
 {
     int time = 0;
     
     for (int i = 0; i < cmd.count; i++) {
-        for (int j = 0; j < r->plates_count; j++) {
-            if (strcmp(cmd.foods[i], r->recettes[j].name) == 0 && time < r->recettes[j].temps_prep) {
-                time = r->recettes[j].temps_prep;
+		sem_wait(rest_mutex);
+        for (int j = 0; j < rest_mem->plates_count; j++) {
+            if (strcmp(cmd.foods[i], rest_mem->recettes[j].name) == 0 && time < rest_mem->recettes[j].temps_prep) {
+                time = rest_mem->recettes[j].temps_prep;
             }
         }
+        sem_post(rest_mutex);
     }
     
     return time;
 }
 
-void add_command(struct command c, struct rest *r)
+void add_command(struct command c)
 {    
     sem_wait(rest_mutex);
     rest_mem->cmd_waiting[rest_mem->cmd_count++] = c;
@@ -243,21 +248,23 @@ void add_command(struct command c, struct rest *r)
 
 int rand_time(int a, int b)
 {
-
     return rand()%(b-a) +a;
 }
 
-int number_repeice(char *name, struct rest *r)
+int find_repeice(char *name)
 {
-	for (int n=0; n < r->plates_count; n++) {
-		if (strcmp(name, r->recettes[n].name) == 0) {
+	sem_wait(rest_mutex);
+	for (int n=0; n < rest_mem->plates_count; n++) {
+		if (strcmp(name, rest_mem->recettes[n].name) == 0) {
+		sem_post(rest_mutex);
 		return n;
 		}
 	}
+	sem_post(rest_mutex);
 	return -1;
 }
 
-void add_aliments_to_cmd (struct cuisine_stock *command_tot, struct receipe recette , int commanded)
+void add_aliments_to_cmd(struct cuisine_stock *command_tot, struct receipe recette , int commanded)
 {
 	for (int j=0; j < recette.ingredients_count; j++) {
 		int pos = ingredient_in_stock(*command_tot, recette.name);
@@ -282,66 +289,69 @@ void buy_aliments_if_needed(int cmd_need, struct cuisine_stock *s, int pos)
 	}
 }
 
-void pick_aliments(struct cuisine_stock command, struct cuisine_stock *s)
+void pick_aliments(struct cuisine_stock aliments_needed, struct cuisine_stock *s)
 {
-	for (int n=0; n<command.aliments_count; n++) {
+	for (int n=0; n<aliments_needed.aliments_count; n++) {
 		for (int i=0; i < s->aliments_count; i++) {
-			if (strcmp(command.aliments[n], s->aliments[i]) == 0) {
+			if (strcmp(aliments_needed.aliments[n], s->aliments[i]) == 0) {
 				
-				buy_aliments_if_needed(command.quantities[n], s, i);
+				buy_aliments_if_needed(aliments_needed.quantities[n], s, i);
 				
-				s->quantities[i] -= command.quantities[n];
+				s->quantities[i] -= aliments_needed.quantities[n];
 			}
 		}
 	}	
 }
 
-void collect_ingredients(struct command cmd, struct rest *r, struct cuisine_stock *s)
+void collect_ingredients(struct command cmd, struct cuisine_stock *s)
 {	
-    struct cuisine_stock ali_tot;
-    ali_tot.aliments_count = 0;
+    struct cuisine_stock aliments_needed;
+    aliments_needed.aliments_count = 0;
     
 	/* remplissage de ali_tot */
 	for (int i=0; i<cmd.count; i++) {
-		int n = number_repeice(cmd.foods[i], r);
-		if (n < 0) {
+		
+		int n = find_repeice(cmd.foods[i]);
+		if ( n < 0) {
 			log_cook_error("can't find receipe");
 		}
-		add_aliments_to_cmd(&ali_tot, r->recettes[n] , cmd.quantities[i]);
+		struct receipe recette = rest_mem->recettes[n];
+		add_aliments_to_cmd(&aliments_needed, recette, cmd.quantities[i]);
 	
 	}
 
-	print_stock(&ali_tot);
+	print_stock(&aliments_needed);
 	
-	pick_aliments(ali_tot, s);
+	pick_aliments(aliments_needed, s);
 }
 
-struct command pop_command(struct rest *r)
-{
-    struct command cmd = r->cmd_waiting[0];
-    memcpy(r->cmd_waiting, &r->cmd_waiting[1], (--r->cmd_count) * sizeof(struct command));
+struct command pop_command()
+{        
+	sem_wait(rest_mutex);
+    struct command cmd = rest_mem->cmd_waiting[0];
+    memcpy(rest_mem->cmd_waiting, &rest_mem->cmd_waiting[1], (--rest_mem->cmd_count) * sizeof(struct command));
+    sem_post(rest_mutex);
     return cmd;
 }
 
-int cook_aliments(struct rest *r, struct cuisine_stock *s)
+int cook_aliments(struct cuisine_stock *s)
 {
-    sem_wait(rest_mutex);
-    struct command cmd = pop_command(r);
-    sem_post(rest_mutex);
+    
+    struct command cmd = pop_command();
     
     //log_rest("cook_aliments %d %s for %d", cmd.quantities[0], cmd.foods[0], cmd.user_pid);
-    int time = time_command(r, cmd);
+    int time = time_command(cmd) + rand_time(0, RAND_FACTOR);
     log_rest("time to prepare : %d", time);
     if (time == 0) {
         log_cook_error("can't calcul command time");
         return 0;
     }
     
-    struct msg_command_status rcv_command = { .dest=cmd.user_pid, .status= COMMAND_START, .time = time};
-    strcpy(rcv_command.rest_name, r->name);
-    msgsnd(q, &rcv_command, MSG_STATUS_COMMAND_SIZE, 0);
+    if (!send_command_status(q, cmd.user_pid, COMMAND_START, time, cmd.name))
+		log_cook_error("Sending COMMAND_START to %d", cmd.user_pid);
+
     log_cook("Collecting ingredients");
-    collect_ingredients(cmd, r, s);
+    collect_ingredients(cmd, s);
     log_cook("ingredients collectés");
     log_cook("New stock :");
     print_stock(s);
@@ -355,16 +365,18 @@ void kitchen_process(struct cuisine_stock *s)
 {    
     while(1) {
         sleep(3);
+        sem_wait(rest_mutex);
         if (rest_mem->cmd_count > 0) {
             int user_pid = rest_mem->cmd_waiting[0].user_pid;
-            
-            if (cook_aliments(rest_mem, s)) {
-                struct msg_command_status msg = { .dest = user_pid, .status = COMMAND_COOKED, .time = 0 };
-                strcpy(msg.rest_name, rest_mem->name);
-                if (msgsnd(q, &msg, MSG_STATUS_COMMAND_SIZE, 0) < 0) {
-                    log_cook_error("While sending COMMAND_COOKED");
-                }
-            }	log_cook("command sent");
+            char name_rest[NAME_MAX];
+            strcpy(name_rest, rest_mem->cmd_waiting[0].name);
+			sem_post(rest_mutex);
+            if (cook_aliments(s)) {
+            	if (!send_command_status(q, user_pid, COMMAND_COOKED, 0, name_rest)) {
+				log_cook_error("send command status to hubert");
+				}
+				log_cook("command sent");
+			}
         }
     }
 }
@@ -436,12 +448,16 @@ int main(int argc, char **argv)
         kitchen_process(s);
     } else {
         while(1) {
-            struct msg_command command;
-            if (msgrcv(q, &command, MSG_COMMAND_SIZE, getpid(), 0) < 0) {
-                rest_panic("While receiving");
-            }
+            struct command *cmd;
+            if (!recv_command(q, getpid(), cmd)) {
+				log_rest_error("rcv command from hubert");
+			}
             
-            add_command(command.command, rest_mem);
+            add_command(*cmd);
+            
+            if (!send_command_status(q, cmd->user_pid, COMMAND_ARRIVED, 0, cmd->name)) {
+				log_rest_error("send command status to hubert");
+			}
         }
     }
     free(s);

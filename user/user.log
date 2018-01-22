@@ -475,3 +475,151 @@
 			Food : chips 1
 14:45:47 - USER   : [INFO ] Command DONE
 14:45:52 - USER   : [INFO ] Closing User
+19:05:14 - USER   : [INFO ] Connecting...
+19:05:14 - USER   : [INFO ] Connected
+19:05:15 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:05:15 - USER   : [INFO ] aliments disponibles :
+
+19:05:15 - USER   : [INFO ] pizza     
+19:05:15 - USER   : [INFO ] chips     
+19:05:15 - USER   : [INFO ] 
+
+19:05:28 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : pizza 1
+			Food : chips 10
+19:05:46 - USER   : [INFO ] Command DONE
+19:06:10 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : pizza 1
+			Food : chips 10
+19:07:09 - USER   : [INFO ] Command DONE
+19:07:32 - USER   : [INFO ] Closing User
+19:02:49 - USER   : [INFO ] Connecting...
+19:02:49 - USER   : [INFO ] Connected
+19:02:50 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:02:50 - USER   : [INFO ] aliments disponibles :
+
+19:02:50 - USER   : [INFO ] pizza     
+19:02:50 - USER   : [INFO ] chips     
+19:02:50 - USER   : [INFO ] 
+
+19:03:08 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : pizza 2
+			Food : chips 1
+19:03:41 - USER   : [INFO ] Command DONE
+19:04:01 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : pizza 2
+			Food : chips 5
+19:04:54 - USER   : [INFO ] Command DONE
+19:05:36 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : chips 5
+19:05:51 - USER   : [INFO ] Command DONE
+19:06:08 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : pizza 4
+			Food : chips 5
+19:06:43 - USER   : [INFO ] Command DONE
+19:07:36 - USER   : [INFO ] Closing User
+19:10:13 - USER   : [ERROR] Can't get menus from hubert : Invalid argument
+19:10:15 - USER   : [INFO ] Connecting...
+19:10:15 - USER   : [INFO ] Connected
+19:10:15 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:10:15 - USER   : [INFO ] aliments disponibles :
+
+19:10:15 - USER   : [INFO ] pizza     
+19:10:15 - USER   : [INFO ] chips     
+19:10:15 - USER   : [INFO ] 
+
+19:10:15 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:10:15 - USER   : [INFO ] aliments disponibles :
+
+19:10:15 - USER   : [INFO ] pizza     
+19:10:15 - USER   : [INFO ] chips     
+19:10:15 - USER   : [INFO ] 
+
+19:10:15 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:10:15 - USER   : [INFO ] aliments disponibles :
+
+19:10:15 - USER   : [INFO ] pizza     
+19:10:15 - USER   : [INFO ] chips     
+19:10:15 - USER   : [INFO ] 
+
+19:10:38 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : pizza 1
+19:11:52 - USER   : [INFO ] Command DONE
+19:17:13 - USER   : [INFO ] Closing User
+19:17:13 - USER   : [ERROR] Can't open perm queue : No such file or directory
+19:10:19 - USER   : [INFO ] Connecting...
+19:10:19 - USER   : [INFO ] Connected
+19:10:19 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:10:19 - USER   : [INFO ] aliments disponibles :
+
+19:10:19 - USER   : [INFO ] pizza     
+19:10:19 - USER   : [INFO ] chips     
+19:10:19 - USER   : [INFO ] 
+
+19:10:19 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:10:19 - USER   : [INFO ] aliments disponibles :
+
+19:10:19 - USER   : [INFO ] pizza     
+19:10:19 - USER   : [INFO ] chips     
+19:10:19 - USER   : [INFO ] 
+
+19:10:19 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:10:19 - USER   : [INFO ] aliments disponibles :
+
+19:10:19 - USER   : [INFO ] pizza     
+19:10:19 - USER   : [INFO ] chips     
+19:10:19 - USER   : [INFO ] 
+
+19:10:31 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : pizza 1
+19:11:10 - USER   : [INFO ] Command DONE
+19:17:14 - USER   : [INFO ] Closing User
+19:17:14 - USER   : [ERROR] Can't open perm queue : No such file or directory
+19:10:17 - USER   : [INFO ] Connecting...
+19:10:17 - USER   : [INFO ] Connected
+19:10:18 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:10:18 - USER   : [INFO ] aliments disponibles :
+
+19:10:18 - USER   : [INFO ] pizza     
+19:10:18 - USER   : [INFO ] chips     
+19:10:18 - USER   : [INFO ] 
+
+19:10:18 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:10:18 - USER   : [INFO ] aliments disponibles :
+
+19:10:18 - USER   : [INFO ] pizza     
+19:10:18 - USER   : [INFO ] chips     
+19:10:18 - USER   : [INFO ] 
+
+19:10:18 - USER   : [INFO ] Restaurant name : Pizza2!
+
+19:10:18 - USER   : [INFO ] aliments disponibles :
+
+19:10:18 - USER   : [INFO ] pizza     
+19:10:18 - USER   : [INFO ] chips     
+19:10:18 - USER   : [INFO ] 
+
+19:10:34 - USER   : [INFO ] Command
+		Command in : Pizza2!
+			Food : pizza 1
+19:11:24 - USER   : [INFO ] Command DONE
+19:17:14 - USER   : [INFO ] Closing User
+19:17:14 - USER   : [ERROR] Can't open perm queue : No such file or directory

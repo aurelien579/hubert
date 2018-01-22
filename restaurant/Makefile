@@ -1,6 +1,6 @@
 CC 	= gcc
 CFLAGS 	= -Wall -std=c99 -I../libmsg/include -D_GNU_SOURCE
-LFLAGS	= -pthread -L../libmsg/
+LFLAGS	= -pthread -L../libmsg/ -l msg
 TARGET 	= restaurant
 OBJS 	= $(patsubst %.c, %.o, $(wildcard src/*.c))
 

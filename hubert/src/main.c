@@ -19,7 +19,7 @@
 
 #include "driver.h"
 
-#define DRIVER_MAX  5
+#define DRIVER_MAX  1
 
 struct rest {
     char    name[NAME_MAX];
@@ -336,27 +336,37 @@ static void user(int key)
                 break;
             }
             
-            if (!send_command_to_rest(rest_pid, &cmd)) {
+            if (!send_command(perm_queue, rest_pid, &cmd)) {
                 log_user_error("send_command_to_rest");
                 break;
             }
             
             
-            /* COMMAND_START STATUS */
-            struct msg_command_status msg_status;
-            if (!recv_command_status_from_rest(cmd.user_pid, &msg_status)) {
+            /* COMMAND_RECEIVED STATUS */
+            struct msg_command_status msg;
+            if (!recv_command_status(perm_queue, cmd.user_pid, &msg)) {
                 log_user_error("recv_command_status_from_rest");
                 break;
             }
             
-            msg_status.dest = cmd.user_pid;
-            if (!send_command_status_to_user(user_q, &msg_status)) {
+            if (!send_command_status(user_q, cmd.user_pid, msg.status, msg.time, msg.name)) {
+                log_user_error("send_command_status_to_user");
+                break;
+            }
+            
+            /* COMMAND_START STATUS */
+            if (!recv_command_status(perm_queue, cmd.user_pid, &msg)) {
+                log_user_error("recv_command_status_from_rest");
+                break;
+            }
+            
+            if (!send_command_status(user_q, cmd.user_pid, msg.status, msg.time, msg.name)) {
                 log_user_error("send_command_status_to_user");
                 break;
             }
             
             /* COMMAND_COOKED STATUS */
-            if (!recv_command_status_from_rest(cmd.user_pid, &msg_status)) {
+            if (!recv_command(perm_queue, cmd.user_pid, &msg)) {
                 log_user_error("recv_command_status_from_rest");
                 break;
             }
