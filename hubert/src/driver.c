@@ -83,6 +83,7 @@ int driver_is_ready(struct driver *self)
 
 void driver_deliver(struct driver *self, struct command cmd)
 {
+	log_driver("Delivering to %d", cmd.user_pid);
     self->pid = fork();
     if (self->pid == 0) {
         self->ready = 0;

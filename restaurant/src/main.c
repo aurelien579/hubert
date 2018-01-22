@@ -402,7 +402,9 @@ void kitchen_process(struct cuisine_stock *s)
 				}
 				log_cook("Command sent");
 			}
-        }
+        } else {
+			sem_post(rest_mutex);
+		}
     }
 }
 

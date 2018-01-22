@@ -285,6 +285,8 @@ static void user(int key)
                 log_user_error("user_recv_command error");
                 break;
             }
+			
+			log_hubert("Command from %d", cmd.user_pid);
             
             int rest_pid = get_rest_pid(cmd.name);
             if (rest_pid == 0) {
@@ -325,7 +327,7 @@ static void user(int key)
             }
             
             /* COMMAND_COOKED STATUS */
-            if (!msg_recv_command(perm_queue, cmd.user_pid, &cmd)) {
+            if (!msg_recv_command_status(perm_queue, cmd.user_pid, &msg)) {
                 log_user_error("recv_command_status_from_rest");
                 break;
             }
