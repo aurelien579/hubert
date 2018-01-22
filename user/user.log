@@ -291,3 +291,24 @@
 14:38:22 - USER   : [INFO ] Closing User
 14:38:24 - USER   : [INFO ] Closing User
 14:38:27 - USER   : [INFO ] Closing User
+16:28:20 - USER   : [INFO ] Connecting...
+16:28:20 - USER   : [INFO ] Connected
+16:28:20 - USER   : [INFO ] Restaurant name : Pizza!
+
+16:28:20 - USER   : [INFO ] aliments disponibles :
+
+16:28:20 - USER   : [INFO ] royale     
+16:28:20 - USER   : [INFO ] fromage     
+16:28:20 - USER   : [INFO ] 
+
+16:28:24 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 2
+			Food : fromage 1
+16:29:07 - USER   : [INFO ] Command DONE
+16:30:00 - USER   : [INFO ] Command
+		Command in : Pizza!
+			Food : royale 3
+			Food : fromage 6
+16:30:41 - USER   : [INFO ] Command DONE
+16:31:06 - USER   : [INFO ] Closing User
