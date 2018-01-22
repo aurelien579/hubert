@@ -268,7 +268,7 @@ static void deliver_command(struct command *cmd)
     driver_deliver(driver, *cmd);
 }
 
-/* TODO: Correct memory leak (make a user_close function that close the mutex */
+
 static void user(int key)
 {
     int user_q = msgget(key, 0);

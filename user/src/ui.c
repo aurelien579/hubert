@@ -3,6 +3,8 @@
 #include <ncurses.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define MAX_LINES       100
 #define MAX_COMMANDS    5
